@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;850&family=Fira+Code:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Fira Code", ui-monospace, monospace;
+}
+
+@layer utilities {
+  @keyframes infinite-loading {
+    0% {
+      left: -33%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  .animate-infinite-loading {
+    animation: infinite-loading 1.25s infinite linear;
+  }
+
+  .animate-spin-slow {
+    animation: spin 8s infinite linear;
+  }
+}
+
+/* Custom print adjustments */
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  #sidebar-navigation-container,
+  #applet-top-header,
+  #payments-view-panel > div,
+  #payments-view-panel > form,
+  button,
+  footer {
+    display: none !important;
+  }
+  #applet-viewport-frame {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+

@@ -1,0 +1,6 @@
+{
+  "name": "ARTI8SAN ERP & Accounts Management System",
+  "description": "A high-performance modern ERP, inventory tracking, and accounts management system tailored for the ARTISAN embroidery unit, inspired by Fast Accounts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
