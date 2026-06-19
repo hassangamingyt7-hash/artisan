@@ -199,7 +199,8 @@ app.post("/api/users", authenticateJWT, authorizeRoles("admin"), async (req: Req
     });
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ error: "Failed to add user" });
+    console.error("Failed to add user:", err);
+    res.status(500).json({ error: "Failed to add user: " + err.message });
   }
 });
 

@@ -14,7 +14,7 @@ export default function UserManagementView({ userRole }: { userRole: string }) {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("artisan_token");
+      const token = localStorage.getItem("artisan_erp_token");
       const res = await fetch("/api/users", {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -31,7 +31,7 @@ export default function UserManagementView({ userRole }: { userRole: string }) {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("artisan_token");
+      const token = localStorage.getItem("artisan_erp_token");
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -41,7 +41,8 @@ export default function UserManagementView({ userRole }: { userRole: string }) {
         setNewUser({ name: "", email: "", username: "", password: "", role: "manager" });
         fetchUsers();
       } else {
-        alert("Failed to create user. Ensure username is unique.");
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.error || "Failed to create user. Ensure username is unique.");
       }
     } catch (e) {
       console.error(e);
@@ -51,7 +52,7 @@ export default function UserManagementView({ userRole }: { userRole: string }) {
   const handleDelete = async (id: number) => {
     if(!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      const token = localStorage.getItem("artisan_token");
+      const token = localStorage.getItem("artisan_erp_token");
       const res = await fetch(`/api/users/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
