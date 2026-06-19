@@ -33,31 +33,36 @@ export async function initMySQLDB() {
     await checkTable("users", `CREATE TABLE users (
       id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(255),
-      email VARCHAR(255) UNIQUE,
+      email VARCHAR(255),
+      username VARCHAR(255) UNIQUE,
       role VARCHAR(50),
       password VARCHAR(255)
     )`);
 
     await checkTable("customers", `CREATE TABLE customers (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       name VARCHAR(255), company_name VARCHAR(255), phone VARCHAR(100),
       whatsapp VARCHAR(100), email VARCHAR(255), address TEXT, ntn VARCHAR(100), notes TEXT
     )`);
 
     await checkTable("brands", `CREATE TABLE brands (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       name VARCHAR(255), contact_person VARCHAR(255), phone VARCHAR(100),
       email VARCHAR(255), address TEXT, payment_terms VARCHAR(255)
     )`);
 
     await checkTable("suppliers", `CREATE TABLE suppliers (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       name VARCHAR(255), contact_person VARCHAR(255), phone VARCHAR(100), whatsapp VARCHAR(100),
       email VARCHAR(255), address TEXT, supplier_type VARCHAR(100)
     )`);
 
     await checkTable("thread_inventory", `CREATE TABLE thread_inventory (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       shade_code VARCHAR(100), shade_name VARCHAR(255), brand VARCHAR(100), supplier_id INT,
       qty_purchased INT, qty_available INT, unit VARCHAR(50), cost_per_cone DECIMAL(10,2), total_cost DECIMAL(12,2),
       purchase_bill_number VARCHAR(100), purchase_date VARCHAR(50), number_of_cones INT, available_quantity INT,
@@ -66,40 +71,47 @@ export async function initMySQLDB() {
 
     await checkTable("purchases", `CREATE TABLE purchases (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       purchase_number VARCHAR(100), purchase_date VARCHAR(50), supplier_id INT,
       product_name TEXT, quantity INT, unit VARCHAR(50), unit_cost DECIMAL(10,2), total_cost DECIMAL(12,2), payment_status VARCHAR(50)
     )`);
 
     await checkTable("purchase_items", `CREATE TABLE purchase_items (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       purchase_id INT, shade_code VARCHAR(100), shade_name VARCHAR(255), cones INT, rate DECIMAL(10,2), total_amount DECIMAL(12,2)
     )`);
 
     await checkTable("thread_consumption", `CREATE TABLE thread_consumption (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       date VARCHAR(50), shade_code VARCHAR(100), shade_name VARCHAR(255), quantity_consumed INT,
       order_id INT, order_number VARCHAR(100), notes TEXT
     )`);
 
     await checkTable("thread_stock_ledger", `CREATE TABLE thread_stock_ledger (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       date VARCHAR(50), type VARCHAR(50), supplier_id INT, purchase_id INT, purchase_number VARCHAR(100),
       shade_code VARCHAR(100), shade_name VARCHAR(255), qty_in INT, qty_out INT, balance INT
     )`);
 
     await checkTable("expenses", `CREATE TABLE expenses (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       expense_date VARCHAR(50), category VARCHAR(100), description TEXT, amount DECIMAL(10,2), payment_method VARCHAR(50)
     )`);
 
     await checkTable("orders", `CREATE TABLE orders (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       order_number VARCHAR(100), brand_id INT, design_name VARCHAR(255), design_code VARCHAR(100),
       quantity INT, rate DECIMAL(10,2), total_amount DECIMAL(12,2), delivery_date VARCHAR(50), status VARCHAR(50)
     )`);
 
     await checkTable("invoices", `CREATE TABLE invoices (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       invoice_number VARCHAR(100), invoice_date VARCHAR(50), brand_id INT, customer_id INT,
       items TEXT, quantity_total INT, total_amount DECIMAL(12,2), tax_rate DECIMAL(5,2), tax_amount DECIMAL(10,2),
       withholding_tax DECIMAL(10,2), withholding_rate DECIMAL(5,2), discount DECIMAL(10,2), grand_total DECIMAL(12,2),
@@ -108,17 +120,20 @@ export async function initMySQLDB() {
 
     await checkTable("payments", `CREATE TABLE payments (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       type VARCHAR(50), entity_type VARCHAR(50), entity_id INT, amount DECIMAL(12,2), payment_date VARCHAR(50),
       payment_method VARCHAR(50), reference_number VARCHAR(150), notes TEXT
     )`);
 
     await checkTable("receivables", `CREATE TABLE receivables (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       customer_id INT, invoice_id INT, amount DECIMAL(12,2), amount_received DECIMAL(12,2), balance_remaining DECIMAL(12,2), due_date VARCHAR(50)
     )`);
 
     await checkTable("payables", `CREATE TABLE payables (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
       supplier_id INT, purchase_id INT, amount DECIMAL(12,2), paid_amount DECIMAL(12,2), balance DECIMAL(12,2), due_date VARCHAR(50)
     )`);
 
@@ -131,10 +146,8 @@ export async function initMySQLDB() {
     if (userRows[0].cnt === 0) {
       console.log("Seeding default users...");
       const SALT = bcrypt.genSaltSync(10);
-      const DEFAULT_PASSWORD_HASH = bcrypt.hashSync("admin123", SALT);
-      await connection.query(`INSERT INTO users (name, email, role, password) VALUES (?, ?, ?, ?)`, ["Administrator", "admin@artisan.com", "admin", DEFAULT_PASSWORD_HASH]);
-      await connection.query(`INSERT INTO users (name, email, role, password) VALUES (?, ?, ?, ?)`, ["Manager", "manager@artisan.com", "manager", DEFAULT_PASSWORD_HASH]);
-      await connection.query(`INSERT INTO users (name, email, role, password) VALUES (?, ?, ?, ?)`, ["Accountant", "accountant@artisan.com", "accountant", DEFAULT_PASSWORD_HASH]);
+      const DEFAULT_PASSWORD_HASH = bcrypt.hashSync("hassan321", SALT);
+      await connection.query(`INSERT INTO users (name, username, email, role, password) VALUES (?, ?, ?, ?, ?)`, ["hassan (Administrator)", "hassan", "", "admin", DEFAULT_PASSWORD_HASH]);
     }
 
     const [settingsRows]: any = await connection.query(`SELECT COUNT(*) as cnt FROM settings`);

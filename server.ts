@@ -8,7 +8,7 @@ import express, { Request, Response, NextFunction } from "express";
 import path from "path";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { DB } from "./src/db/dbEngine.ts";
+import { DB, tenantStorage } from "./src/db/dbEngine.ts";
 import { initMySQLDB } from "./src/db/migrate.ts";
 import { createServer as createViteServer } from "vite";
 
@@ -53,7 +53,9 @@ const authenticateJWT = (req: AuthenticatedRequest, res: Response, next: NextFun
         return;
       }
       req.user = decoded;
-      next();
+      tenantStorage.run({ tenantId: decoded.id, role: decoded.role }, () => {
+        next();
+      });
     });
   } else {
     res.status(401).json({ error: "Access denied. Authenication token is missing." });
@@ -91,9 +93,11 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
     const users = await DB.queryAll<any>("users");
     const user = users.find((u) => {
       const emailLower = (u.email || "").toLowerCase();
+      const userLower = (u.username || "").toLowerCase();
       const idLower = loginIdentifier.toLowerCase();
       return (
         emailLower === idLower ||
+        userLower === idLower ||
         emailLower.split("@")[0] === idLower ||
         (u.role || "").toLowerCase() === idLower ||
         (u.name || "").toLowerCase() === idLower
@@ -159,6 +163,57 @@ app.post("/api/auth/change-password", authenticateJWT, async (req: Authenticated
     res.json({ status: "success", message: "Password updated successfully!" });
   } catch (err: any) {
     res.status(500).json({ error: "Error changing password: " + err.message });
+  }
+});
+
+// =========================================================================
+// USER ACCESS MANAGEMENT ENDPOINTS
+// =========================================================================
+
+app.get("/api/users", authenticateJWT, authorizeRoles("admin"), async (req: Request, res: Response) => {
+  try {
+    const list = await DB.queryAll<any>("users");
+    res.json(list.map(u => ({ id: u.id, name: u.name, email: u.email, username: u.username, role: u.role })));
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+app.post("/api/users", authenticateJWT, authorizeRoles("admin"), async (req: Request, res: Response) => {
+  try {
+    const body = req.body;
+    const users = await DB.queryAll<any>("users");
+    if (users.find(u => u.username === body.username || u.email === body.username)) {
+      res.status(400).json({ error: "Username or email already exists." });
+      return;
+    }
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(body.password, salt);
+    
+    await DB.insertRecord("users", {
+      name: body.name,
+      email: body.email || body.username,
+      username: body.username,
+      password: hash,
+      role: body.role || "manager"
+    });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to add user" });
+  }
+});
+
+app.delete("/api/users/:id", authenticateJWT, authorizeRoles("admin"), async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (id === 1) {
+      res.status(403).json({ error: "Cannot delete master administrator." });
+      return;
+    }
+    await DB.deleteRecord("users", id);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to delete user" });
   }
 });
 

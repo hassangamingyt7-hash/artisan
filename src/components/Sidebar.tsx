@@ -49,6 +49,7 @@ export default function Sidebar({ currentTab, setTab, userRole, isOpen, onClose 
     { id: "invoices", label: "Invoice Engine", icon: Receipt, roles: ["admin", "manager", "accountant"], category: "Finance" },
     { id: "reports", label: "Reporting Engine", icon: BarChart3, roles: ["admin", "manager", "accountant"], category: "Finance" },
     { id: "settings", label: "System Settings", icon: Settings, roles: ["admin", "manager"], category: "Finance" },
+    { id: "users", label: "User Management", icon: Users, roles: ["admin"], category: "Finance" },
   ];
 
   return (

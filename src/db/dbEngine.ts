@@ -7,6 +7,9 @@ import fs from "fs";
 import path from "path";
 import mysql from "mysql2/promise";
 import bcrypt from "bcryptjs";
+import { AsyncLocalStorage } from "async_hooks";
+
+export const tenantStorage = new AsyncLocalStorage<{ tenantId: number, role: string }>();
 
 // Database storage file for offline sandbox persistence
 const SANDBOX_DB_PATH = path.join(process.cwd(), "artisan_erp_db.json");
@@ -69,14 +72,12 @@ function getMySQLPool(): mysql.Pool | null {
 
 // Generate secure passwords for the demo accounts
 const SALT = bcrypt.genSaltSync(10);
-const DEFAULT_PASSWORD_HASH = bcrypt.hashSync("admin123", SALT); // plaintext is "admin123"
+const DEFAULT_PASSWORD_HASH = bcrypt.hashSync("hassan321", SALT); // plaintext is "hassan321"
 
 // Default mock seed data
 const DEFAULT_DB_STATE: DBStructure = {
   users: [
-    { id: 1, name: "ARTI8SAN Administrator", email: "admin@artisan.com", role: "admin", password: DEFAULT_PASSWORD_HASH },
-    { id: 2, name: "Factory Manager", email: "manager@artisan.com", role: "manager", password: DEFAULT_PASSWORD_HASH },
-    { id: 3, name: "Lead Accountant", email: "accountant@artisan.com", role: "accountant", password: DEFAULT_PASSWORD_HASH }
+    { id: 1, name: "hassan (Administrator)", username: "hassan", email: "hassan@artisan.com", role: "admin", password: DEFAULT_PASSWORD_HASH }
   ],
   customers: [
     { id: 1, name: "Khaadi Retail Pakistan", company_name: "Khaadi", phone: "+92 300 1234567", whatsapp: "+92 300 1234567", email: "accounts@khaadi.com", address: "Plot 34, Sector 15, Korangi Industrial Area, Karachi", ntn: "3189456-7", notes: "A-Grade premium fabric client" },
@@ -233,10 +234,21 @@ function saveSandboxDB(data: DBStructure) {
 export const DB = {
   // Query entire table
   async queryAll<T>(tableName: keyof DBStructure): Promise<T[]> {
+    const store = tenantStorage.getStore();
+    const tenantId = store?.tenantId;
+    const role = store?.role;
+    const isAdmin = role === "admin";
+
     const mysql = getMySQLPool();
     if (mysql) {
       try {
-        const [rows] = await mysql.query(`SELECT * FROM \`${tableName}\``);
+        let q = `SELECT * FROM \`${tableName}\``;
+        let p: any[] = [];
+        if (!isAdmin && tenantId && tableName !== "users" && tableName !== "settings") {
+          q += " WHERE user_id = ?";
+          p.push(tenantId);
+        }
+        const [rows] = await mysql.query(q, p);
         return rows as T[];
       } catch (err) {
         console.error(`MySQL select all error on table ${tableName}, failing back to Sandbox`, err);
@@ -248,15 +260,31 @@ export const DB = {
       // settings is an object in sandbox but should be queryable as array
       return [cache.settings] as any;
     }
-    return (cache[tableName] || []) as T[];
+    
+    let list = (cache[tableName] || []) as any[];
+    if (!isAdmin && tenantId && tableName !== "users") {
+      list = list.filter(item => item.user_id === tenantId);
+    }
+    return list as T[];
   },
 
   // Query individual row by ID
   async queryById<T>(tableName: keyof DBStructure, id: number): Promise<T | null> {
+    const store = tenantStorage.getStore();
+    const tenantId = store?.tenantId;
+    const role = store?.role;
+    const isAdmin = role === "admin";
+
     const mysql = getMySQLPool();
     if (mysql) {
       try {
-        const [rows] = await mysql.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [id]);
+        let q = `SELECT * FROM \`${tableName}\` WHERE id = ?`;
+        let p: any[] = [id];
+        if (!isAdmin && tenantId && tableName !== "users" && tableName !== "settings") {
+          q += " AND user_id = ?";
+          p.push(tenantId);
+        }
+        const [rows] = await mysql.query(q, p);
         const list = rows as T[];
         return list.length > 0 ? list[0] : null;
       } catch (err) {
@@ -268,23 +296,32 @@ export const DB = {
     if (tableName === "settings") {
       return cache.settings as any;
     }
-    const list = (cache[tableName] || []) as any[];
+    let list = (cache[tableName] || []) as any[];
+    if (!isAdmin && tenantId && tableName !== "users") {
+      list = list.filter(item => item.user_id === tenantId);
+    }
     const match = list.find((item) => item.id === id);
     return match || null;
   },
 
   // Insert a record
   async insertRecord<T>(tableName: keyof DBStructure, record: Partial<T>): Promise<any> {
+    const tenantId = tenantStorage.getStore()?.tenantId;
+    let finalRecord: any = { ...record };
+    if (tenantId && tableName !== "users" && tableName !== "settings") {
+       finalRecord.user_id = tenantId;
+    }
+
     const mysql = getMySQLPool();
     if (mysql) {
       try {
-        const keys = Object.keys(record);
-        const values = Object.values(record);
+        const keys = Object.keys(finalRecord);
+        const values = Object.values(finalRecord);
         const placeholders = keys.map(() => "?").join(", ");
         const sql = `INSERT INTO \`${tableName}\` (${keys.map(k => `\`${k}\``).join(", ")}) VALUES (${placeholders})`;
         const [result] = await mysql.query(sql, values);
         const insertId = (result as any).insertId;
-        return { id: insertId, ...record };
+        return { id: insertId, ...finalRecord };
       } catch (err) {
         console.error(`MySQL insert error on table ${tableName}, failing back to Sandbox`, err);
       }
@@ -292,8 +329,8 @@ export const DB = {
 
     const cache = loadSandboxDB();
     const list = (cache[tableName] || []) as any[];
-    const nextId = list.reduce((max, item) => (item.id > max ? item.id : max), 0) + 1;
-    const newRecord = { id: nextId, ...record };
+    const nextId = list.reduce((max, item) => ((item && item.id > max) ? item.id : max), 0) + 1;
+    const newRecord = { id: nextId, ...finalRecord };
     
     list.push(newRecord);
     cache[tableName] = list;
@@ -303,6 +340,18 @@ export const DB = {
 
   // Update a record
   async updateRecord(tableName: keyof DBStructure, id: number, record: any): Promise<any> {
+    const store = tenantStorage.getStore();
+    const tenantId = store?.tenantId;
+    const isAdmin = store?.role === "admin";
+    
+    // First, verify ownership
+    if (!isAdmin && tenantId && tableName !== "users" && tableName !== "settings") {
+       const existing = await this.queryById(tableName, id);
+       if (!existing || (existing as any).user_id !== tenantId) {
+         throw new Error("Unauthorized to access or modify this record.");
+       }
+    }
+
     const mysql = getMySQLPool();
     if (mysql) {
       try {
@@ -337,6 +386,18 @@ export const DB = {
 
   // Delete record
   async deleteRecord(tableName: keyof DBStructure, id: number): Promise<boolean> {
+    const store = tenantStorage.getStore();
+    const tenantId = store?.tenantId;
+    const isAdmin = store?.role === "admin";
+    
+    // First, verify ownership
+    if (!isAdmin && tenantId && tableName !== "users" && tableName !== "settings") {
+       const existing = await this.queryById(tableName, id);
+       if (!existing || (existing as any).user_id !== tenantId) {
+         throw new Error("Unauthorized to access or delete this record.");
+       }
+    }
+
     const mysql = getMySQLPool();
     if (mysql) {
       try {

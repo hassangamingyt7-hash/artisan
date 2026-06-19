@@ -24,6 +24,7 @@ import PaymentView from "./components/PaymentView.tsx";
 import InvoiceView from "./components/InvoiceView.tsx";
 import ReportsView from "./components/ReportsView.tsx";
 import SettingsView from "./components/SettingsView.tsx";
+import UserManagementView from "./components/UserManagementView.tsx";
 
 import { 
   Customer, Brand, Supplier, ThreadInventory, Order, 
@@ -37,8 +38,8 @@ export default function App() {
   const [userRole, setUserRole] = useState<string>("");
   
   // Login Inputs
-  const [loginUsername, setLoginUsername] = useState("admin");
-  const [loginPassword, setLoginPassword] = useState("admin123");
+  const [loginUsername, setLoginUsername] = useState("hassan");
+  const [loginPassword, setLoginPassword] = useState("hassan321");
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -327,61 +328,7 @@ export default function App() {
             </button>
           </form>
 
-          {/* Fully-functional quick login selector buttons */}
-          <div className="border-t border-slate-800 pt-4 space-y-2.5" id="quick-login-selection-panel">
-            <p className="text-[9px] text-slate-500 uppercase font-mono font-bold text-center tracking-widest">Select Convenient Trial Operator Login</p>
-            <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
-              <button
-                id="quick-login-admin"
-                type="button"
-                onClick={() => {
-                  setLoginUsername("admin");
-                  setLoginPassword("admin123");
-                }}
-                className={`py-1.5 border rounded text-center cursor-pointer transition-all font-medium ${
-                  loginUsername === "admin" && loginPassword === "admin123"
-                    ? "border-blue-500 bg-blue-500/15 text-white shadow-sm"
-                    : "border-blue-500/15 hover:border-blue-500/40 hover:bg-blue-500/5 text-slate-400 hover:text-white"
-                }`}
-              >
-                Admin
-              </button>
-              <button
-                id="quick-login-manager"
-                type="button"
-                onClick={() => {
-                  setLoginUsername("manager");
-                  setLoginPassword("manager123");
-                }}
-                className={`py-1.5 border rounded text-center cursor-pointer transition-all font-medium ${
-                  loginUsername === "manager" && loginPassword === "manager123"
-                    ? "border-sky-500 bg-sky-500/15 text-white shadow-sm"
-                    : "border-sky-500/15 hover:border-sky-500/40 hover:bg-sky-500/5 text-slate-400 hover:text-white"
-                }`}
-              >
-                Manager
-              </button>
-              <button
-                id="quick-login-accountant"
-                type="button"
-                onClick={() => {
-                  setLoginUsername("accountant");
-                  setLoginPassword("accountant123");
-                }}
-                className={`py-1.5 border rounded text-center cursor-pointer transition-all font-medium ${
-                  loginUsername === "accountant" && loginPassword === "accountant123"
-                    ? "border-purple-500 bg-purple-500/15 text-white shadow-sm"
-                    : "border-purple-500/15 hover:border-purple-500/40 hover:bg-purple-500/5 text-slate-400 hover:text-white"
-                }`}
-              >
-                Accountant
-              </button>
-            </div>
-            <div className="p-2.5 bg-slate-950/40 border border-slate-800/30 rounded flex items-start gap-1.5 text-[9.5px] text-slate-500 leading-normal font-sans">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              <span>Full active RBAC enforced dynamically. Admin grants broad controls, Accountant locks financial views, and Manager supervises thread inventories.</span>
-            </div>
-          </div>
+
         </div>
       </div>
     );
@@ -559,6 +506,12 @@ export default function App() {
               userRole={userRole}
               userName={username}
               onChangePassword={handlePasswordChange}
+            />
+          )}
+
+          {activeTab === "users" && (
+            <UserManagementView 
+              userRole={userRole}
             />
           )}
         </main>
