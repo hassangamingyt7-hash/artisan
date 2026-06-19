@@ -212,3 +212,47 @@ export interface DashboardStats {
     deliveredOrders: number;
   };
 }
+
+export interface Machine {
+  id: number;
+  name: string;
+  machine_number: string;
+  machine_type: string;
+  status: "Running" | "Idle" | "Maintenance";
+  installation_date: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Operator {
+  id: number;
+  name: string;
+  assigned_machine_id: number;
+  assigned_machine_name?: string;
+  bonus_rate_per_unit: number;
+  monthly_base_salary: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DailyProduction {
+  id: number;
+  date: string;
+  machine_id: number;
+  machine_name?: string;
+  operator_id: number;
+  operator_name?: string;
+  brand_name: string;
+  design_name: string;
+  quantity_produced: number;
+  working_hours: number;
+  remarks: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface RolePermission {
+  id: number;
+  role_name: string;
+  permissions_json: string; // JSON holding permissions matrix
+}

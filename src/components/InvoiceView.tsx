@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, Trash2, Search, Printer, Receipt, Eye, X, Save } from "lucide-react";
+import { Plus, Trash2, Search, Printer, Receipt, Eye, X, Save, Edit3 } from "lucide-react";
 import { Invoice, InvoiceItem } from "../types";
 
 interface InvoiceViewProps {

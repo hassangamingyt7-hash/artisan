@@ -34,15 +34,25 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { DashboardStats } from "../types.ts";
+import { DashboardStats, Machine, Operator, DailyProduction } from "../types.ts";
 
 interface DashboardProps {
   stats: DashboardStats | null;
+  machines?: Machine[];
+  operators?: Operator[];
+  dailyProduction?: DailyProduction[];
   loading: boolean;
   onNavigate: (tab: string) => void;
 }
 
-export default function DashboardView({ stats, loading, onNavigate }: DashboardProps) {
+export default function DashboardView({ 
+  stats, 
+  machines = [], 
+  operators = [], 
+  dailyProduction = [], 
+  loading, 
+  onNavigate 
+}: DashboardProps) {
   if (loading || !stats) {
     return (
       <div className="p-6 space-y-6">
@@ -425,6 +435,92 @@ export default function DashboardView({ stats, loading, onNavigate }: DashboardP
           )}
         </div>
 
+      </section>
+
+      {/* Production & Machine Dashboards */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Machine Stats */}
+        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <div className="flex justify-between items-center mb-3">
+             <h3 className="font-bold text-slate-800 text-xs md:text-sm">Machine Floor Monitor</h3>
+             <button onClick={() => onNavigate("machines")} className="text-[11px] text-indigo-600 font-bold hover:underline">Manage Machines</button>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+             <div className="p-3 bg-slate-50 border border-slate-100 rounded text-center">
+                <span className="block text-[10px] uppercase font-bold text-slate-400">Total Machines</span>
+                <span className="text-xl font-black text-slate-800">{machines.length}</span>
+             </div>
+             <div className="p-3 bg-emerald-50 border border-emerald-100 rounded text-center">
+                <span className="block text-[10px] uppercase font-bold text-emerald-600">Running</span>
+                <span className="text-xl font-black text-emerald-700">{machines.filter((m: any) => m.status === 'Running').length}</span>
+             </div>
+             <div className="p-3 bg-amber-50 border border-amber-100 rounded text-center">
+                <span className="block text-[10px] uppercase font-bold text-amber-600">Idle / Maint</span>
+                <span className="text-xl font-black text-amber-700">{machines.filter((m: any) => m.status !== 'Running').length}</span>
+             </div>
+          </div>
+          <div>
+            <h4 className="text-[10px] uppercase font-bold text-slate-400 mb-2">Today's Production Totals</h4>
+            <div className="flex justify-between items-center py-2 border-t border-slate-100">
+               <span className="text-xs font-bold text-slate-600">Total Volume Produced</span>
+               <span className="text-sm font-black font-mono text-indigo-600">
+                 {dailyProduction.filter((p: any) => p.date === new Date().toISOString().substring(0, 10)).reduce((sum, p: any) => sum + p.quantity_produced, 0).toLocaleString()} Units
+               </span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-t border-slate-100 border-b">
+               <span className="text-xs font-bold text-slate-600">Total Working Hours</span>
+               <span className="text-sm font-black font-mono text-slate-800">
+                 {dailyProduction.filter((p: any) => p.date === new Date().toISOString().substring(0, 10)).reduce((sum, p: any) => sum + p.working_hours, 0)} hours
+               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Operator Stats */}
+        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+          <div className="flex justify-between items-center mb-3">
+             <h3 className="font-bold text-slate-800 text-xs md:text-sm">Operator Performance Overview</h3>
+             <button onClick={() => onNavigate("operators")} className="text-[11px] text-fuchsia-600 font-bold hover:underline">Manage Payroll</button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+             <div className="p-3 bg-slate-50 border border-slate-100 rounded text-center">
+                <span className="block text-[10px] uppercase font-bold text-slate-400">Total Operators</span>
+                <span className="text-xl font-black text-slate-800">{operators.length}</span>
+             </div>
+             <div className="p-3 bg-fuchsia-50 border border-fuchsia-100 rounded text-center">
+                <span className="block text-[10px] uppercase font-bold text-fuchsia-600">Payroll Payable Estimates</span>
+                <span className="text-xl font-black text-fuchsia-700 font-mono">
+                  {new Intl.NumberFormat("en-PK", { style: "currency", currency: "PKR", minimumFractionDigits: 0 }).format(
+                    operators.reduce((sum, op: any) => {
+                       const produced = dailyProduction.filter((p: any) => p.operator_id === op.id).reduce((s, p: any) => s + p.quantity_produced, 0);
+                       return sum + op.monthly_base_salary + (produced * op.bonus_rate_per_unit);
+                    }, 0)
+                  )}
+                </span>
+             </div>
+          </div>
+          <div>
+            <h4 className="text-[10px] uppercase font-bold text-slate-400 mb-2">Top Performer (By Volume)</h4>
+            <div className="bg-slate-50 p-3 rounded border border-slate-100">
+               {(() => {
+                 if (operators.length === 0 || dailyProduction.length === 0) return <span className="text-xs text-slate-500">Not enough data to calculate top performer.</span>;
+                 let topOp = null;
+                 let maxVol = 0;
+                 operators.forEach((op: any) => {
+                   const vol = dailyProduction.filter((p: any) => p.operator_id === op.id).reduce((s, p: any) => s + p.quantity_produced, 0);
+                   if (vol > maxVol) { maxVol = vol; topOp = op; }
+                 });
+                 if (!topOp) return <span className="text-xs text-slate-500">Not enough data to calculate top performer.</span>;
+                 return (
+                   <div className="flex justify-between items-center">
+                      <span className="font-bold text-slate-800 uppercase">{topOp.name}</span>
+                      <span className="font-black text-fuchsia-600 font-mono">{maxVol.toLocaleString()} Units</span>
+                   </div>
+                 );
+               })()}
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

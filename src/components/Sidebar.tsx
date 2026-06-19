@@ -19,6 +19,7 @@ import {
   Settings,
   X,
   History,
+  ShieldCheck,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -42,14 +43,17 @@ export default function Sidebar({ currentTab, setTab, userRole, isOpen, onClose 
     { id: "ledger", label: "Stock Ledger", icon: History, roles: ["admin", "manager", "accountant", "store_manager"], category: "Inventory & Production" },
     { id: "orders", label: "Order Management", icon: FileSpreadsheet, roles: ["admin", "manager", "accountant", "store_manager"], category: "Inventory & Production" },
     { id: "purchases", label: "Purchases", icon: ShoppingCart, roles: ["admin", "manager", "accountant", "store_manager"], category: "Inventory & Production" },
+    { id: "machines", label: "Machine Production", icon: Settings, roles: ["admin", "manager", "production manager", "operator"], category: "Inventory & Production" },
+    { id: "operators", label: "Operator Performance", icon: Users, roles: ["admin", "manager", "production manager", "accountant"], category: "Inventory & Production" },
     
     // Finance
     { id: "expenses", label: "Expenses Ledger", icon: CreditCard, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Finance" },
     { id: "payments", label: "Payments & Vouchers", icon: Wallet, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Finance" },
     { id: "invoices", label: "Invoice Engine", icon: Receipt, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Finance" },
     { id: "reports", label: "Reporting Engine", icon: BarChart3, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Finance" },
-    { id: "settings", label: "System Settings", icon: Settings, roles: ["admin", "manager"], category: "Finance" },
-    { id: "users", label: "User Management", icon: Users, roles: ["admin"], category: "Finance" },
+    { id: "settings", label: "System Settings", icon: Settings, roles: ["admin", "manager"], category: "System" },
+    { id: "users", label: "User Management", icon: Users, roles: ["admin"], category: "System" },
+    { id: "permissions", label: "Roles & Permissions", icon: ShieldCheck, roles: ["admin"], category: "System" },
   ];
 
   return (

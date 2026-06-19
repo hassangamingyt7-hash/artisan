@@ -92,9 +92,11 @@ export async function initMySQLDB() {
     await checkTable("thread_stock_ledger", `CREATE TABLE thread_stock_ledger (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT,
-      date VARCHAR(50), type VARCHAR(50), supplier_id INT, purchase_id INT, purchase_number VARCHAR(100),
-      shade_code VARCHAR(100), shade_name VARCHAR(255), qty_in INT, qty_out INT, balance INT
+      date VARCHAR(50), type VARCHAR(50), supplier_id INT, supplier_name VARCHAR(255), purchase_id INT, purchase_number VARCHAR(100),
+      shade_code VARCHAR(100), shade_name VARCHAR(255), qty_in INT, qty_out INT, balance INT, reference_no VARCHAR(255)
     )`);
+    try { await connection.query("ALTER TABLE thread_stock_ledger ADD COLUMN supplier_name VARCHAR(255)"); } catch(e) {}
+    try { await connection.query("ALTER TABLE thread_stock_ledger ADD COLUMN reference_no VARCHAR(255)"); } catch(e) {}
 
     await checkTable("expenses", `CREATE TABLE expenses (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -159,6 +161,47 @@ export async function initMySQLDB() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT,
       supplier_id INT, purchase_id INT, amount DECIMAL(12,2), paid_amount DECIMAL(12,2), balance DECIMAL(12,2), due_date VARCHAR(50)
+    )`);
+
+    await checkTable("roles_permissions", `CREATE TABLE roles_permissions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      role_name VARCHAR(50) UNIQUE,
+      permissions_json TEXT
+    )`);
+
+    await checkTable("machines", `CREATE TABLE machines (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100),
+      machine_number VARCHAR(100),
+      machine_type VARCHAR(100),
+      status VARCHAR(50),
+      installation_date VARCHAR(50),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`);
+
+    await checkTable("operators", `CREATE TABLE operators (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100),
+      assigned_machine_id INT,
+      bonus_rate_per_unit DECIMAL(10,2),
+      monthly_base_salary DECIMAL(10,2),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`);
+
+    await checkTable("daily_production", `CREATE TABLE daily_production (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      date VARCHAR(50),
+      machine_id INT,
+      operator_id INT,
+      brand_name VARCHAR(255),
+      design_name VARCHAR(255),
+      quantity_produced INT,
+      working_hours DECIMAL(5,2),
+      remarks TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`);
 
     await checkTable("settings", `CREATE TABLE settings (

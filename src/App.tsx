@@ -25,6 +25,9 @@ import InvoiceView from "./components/InvoiceView.tsx";
 import ReportsView from "./components/ReportsView.tsx";
 import SettingsView from "./components/SettingsView.tsx";
 import UserManagementView from "./components/UserManagementView.tsx";
+import MachineProductionView from "./components/MachineProductionView.tsx";
+import OperatorPerformanceView from "./components/OperatorPerformanceView.tsx";
+import RolePermissionsView from "./components/RolePermissionsView.tsx";
 
 import { 
   Customer, Brand, Supplier, ThreadInventory, Order, 
@@ -59,6 +62,10 @@ export default function App() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [rolesPermissions, setRolesPermissions] = useState<any[]>([]);
+  const [machines, setMachines] = useState<any[]>([]);
+  const [operators, setOperators] = useState<any[]>([]);
+  const [dailyProduction, setDailyProduction] = useState<any[]>([]);
 
   // Page level metadata state
   const [dashboardStats, setDashboardStats] = useState<any>(null);
@@ -115,7 +122,11 @@ export default function App() {
         dataExp,
         dataPay,
         dataInvoices,
-        dataStats
+        dataStats,
+        dataRolesPerms,
+        dataMachines,
+        dataOperators,
+        dataDailyProd
       ] = await Promise.all([
         safeFetchJson("/api/customers", []),
         safeFetchJson("/api/brands", []),
@@ -127,6 +138,10 @@ export default function App() {
         safeFetchJson("/api/payments", []),
         safeFetchJson("/api/invoices", []),
         safeFetchJson("/api/dashboard-stats", { financials: {}, inventory: {}, production: {} }),
+        safeFetchJson("/api/roles_permissions", []),
+        safeFetchJson("/api/machines", []),
+        safeFetchJson("/api/operators", []),
+        safeFetchJson("/api/daily_production", []),
       ]);
 
       setCustomers(dataCust);
@@ -139,6 +154,10 @@ export default function App() {
       setPayments(dataPay);
       setInvoices(dataInvoices);
       setDashboardStats(dataStats);
+      setRolesPermissions(dataRolesPerms);
+      setMachines(dataMachines);
+      setOperators(dataOperators);
+      setDailyProduction(dataDailyProd);
     } catch (err) {
       console.error("Critical API Synchronization Fail:", err);
     } finally {
@@ -369,6 +388,9 @@ export default function App() {
           {activeTab === "dashboard" && (
             <DashboardView 
               stats={dashboardStats} 
+              machines={machines}
+              operators={operators}
+              dailyProduction={dailyProduction}
               loading={dataLoading}
               onNavigate={(tab) => setActiveTab(tab)}
             />
@@ -453,6 +475,35 @@ export default function App() {
             />
           )}
 
+          {activeTab === "machines" && (
+            <MachineProductionView
+              machines={machines}
+              operators={operators}
+              dailyProduction={dailyProduction}
+              userRole={userRole}
+              onRefresh={fetchSyncAllData}
+              onAddMachine={(data) => handleMutateEntity("/api/machines", "POST", data)}
+              onEditMachine={(id, data) => handleMutateEntity("/api/machines", "PUT", data, id)}
+              onDeleteMachine={(id) => handleMutateEntity("/api/machines", "DELETE", undefined, id)}
+              onAddProduction={(data) => handleMutateEntity("/api/daily_production", "POST", data)}
+              onEditProduction={(id, data) => handleMutateEntity("/api/daily_production", "PUT", data, id)}
+              onDeleteProduction={(id) => handleMutateEntity("/api/daily_production", "DELETE", undefined, id)}
+            />
+          )}
+
+          {activeTab === "operators" && (
+            <OperatorPerformanceView
+              operators={operators}
+              machines={machines}
+              dailyProduction={dailyProduction}
+              userRole={userRole}
+              onRefresh={fetchSyncAllData}
+              onAddOperator={(data) => handleMutateEntity("/api/operators", "POST", data)}
+              onEditOperator={(id, data) => handleMutateEntity("/api/operators", "PUT", data, id)}
+              onDeleteOperator={(id) => handleMutateEntity("/api/operators", "DELETE", undefined, id)}
+            />
+          )}
+
           {activeTab === "expenses" && (
             <ExpenseView 
               expenses={expenses} 
@@ -496,6 +547,9 @@ export default function App() {
               payments={payments}
               invoices={invoices}
               orders={orders}
+              machines={machines}
+              operators={operators}
+              dailyProduction={dailyProduction}
             />
           )}
 
@@ -510,6 +564,16 @@ export default function App() {
           {activeTab === "users" && (
             <UserManagementView 
               userRole={userRole}
+            />
+          )}
+
+          {activeTab === "permissions" && (
+            <RolePermissionsView 
+              permissions={rolesPermissions}
+              userRole={userRole}
+              onRefresh={fetchSyncAllData}
+              onSave={(data) => handleMutateEntity("/api/roles_permissions", "POST", data)}
+              onUpdate={(id, data) => handleMutateEntity("/api/roles_permissions", "PUT", data, id)}
             />
           )}
         </main>

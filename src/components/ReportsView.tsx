@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { Search, DollarSign, Calendar, TrendingUp, TrendingDown, Layers, Printer, BarChart2 } from "lucide-react";
-import { Brand, Supplier, ThreadInventory, Purchase, Expense, Payment, Invoice, Order } from "../types.ts";
+import { Brand, Supplier, ThreadInventory, Purchase, Expense, Payment, Invoice, Order, Machine, Operator, DailyProduction } from "../types.ts";
 
 interface ReportsViewProps {
   brands: Brand[];
@@ -16,10 +16,13 @@ interface ReportsViewProps {
   payments: Payment[];
   invoices: Invoice[];
   orders: Order[];
+  machines?: Machine[];
+  operators?: Operator[];
+  dailyProduction?: DailyProduction[];
 }
 
-export default function ReportsView({ brands, suppliers, inventory, purchases, expenses, payments, invoices, orders }: ReportsViewProps) {
-  const [reportType, setReportType] = useState<"pl" | "inventory" | "receivables">("pl");
+export default function ReportsView({ brands, suppliers, inventory, purchases, expenses, payments, invoices, orders, machines = [], operators = [], dailyProduction = [] }: ReportsViewProps) {
+  const [reportType, setReportType] = useState<"pl" | "inventory" | "receivables" | "machines" | "operators">("pl");
 
   const formatPKR = (amount: number) => {
     return new Intl.NumberFormat("en-PK", {
@@ -30,14 +33,14 @@ export default function ReportsView({ brands, suppliers, inventory, purchases, e
   };
 
   // 1. PL calculations
-  const totalSalesRevenue = invoices.reduce((sum, item) => sum + Number(item.total_amount), 0);
-  const totalThreadPurchases = purchases.reduce((sum, item) => sum + Number(item.total_cost), 0);
-  const totalOperatingOverheads = expenses.reduce((sum, item) => sum + Number(item.amount), 0);
+  const totalSalesRevenue = invoices.reduce((sum, item) => sum + Number(item.grand_total || 0), 0);
+  const totalThreadPurchases = purchases.reduce((sum, item) => sum + Number(item.total_cost || 0), 0);
+  const totalOperatingOverheads = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const netOperatingProfit = totalSalesRevenue - totalThreadPurchases - totalOperatingOverheads;
 
   // 2. Receivables calculations
-  const totalInvoiceSum = invoices.reduce((sum, item) => sum + Number(item.total_amount), 0);
-  const totalClientReceipts = payments.filter((p) => p.type === "receipt").reduce((sum, item) => sum + Number(item.amount), 0);
+  const totalInvoiceSum = invoices.reduce((sum, item) => sum + Number(item.grand_total || 0), 0);
+  const totalClientReceipts = payments.filter((p) => p.type === "receipt").reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const outstandingAccountsReceivables = totalInvoiceSum - totalClientReceipts;
 
   const handlePrint = () => {
@@ -80,6 +83,22 @@ export default function ReportsView({ brands, suppliers, inventory, purchases, e
             }`}
           >
             Audit Balances
+          </button>
+          <button
+            onClick={() => setReportType("machines")}
+            className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              reportType === "machines" ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Machine Yield
+          </button>
+          <button
+            onClick={() => setReportType("operators")}
+            className={`flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              reportType === "operators" ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Operator Book
           </button>
         </div>
       </div>
@@ -323,6 +342,90 @@ export default function ReportsView({ brands, suppliers, inventory, purchases, e
           </div>
         </div>
       )}
+
+      {reportType === "machines" && (
+        <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
+           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6">
+             <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+               <div>
+                 <h4 className="font-extrabold text-sm uppercase tracking-wider text-slate-800">Machine Production Yield Analysis</h4>
+                 <p className="text-xs text-slate-400 font-mono">Aggregated Output History</p>
+               </div>
+               <button onClick={handlePrint} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 border border-slate-200 bg-white px-3.5 py-1.5 rounded-xl cursor-pointer shadow-sm transition-all"><Printer className="w-3.5 h-3.5" /> PRINT</button>
+             </div>
+             <table className="w-full text-left text-sm mt-4">
+               <thead>
+                 <tr className="border-b border-slate-200 bg-slate-50 text-[10px] uppercase text-slate-500 font-bold uppercase">
+                    <th className="py-2.5 px-3">Machine</th>
+                    <th className="py-2.5 px-3">Type</th>
+                    <th className="py-2.5 px-3 text-right">Lifetime Prod Vol (Units)</th>
+                    <th className="py-2.5 px-3 text-right">Lifetime Op Hours</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-100 font-medium">
+                  {machines.map((m: any) => {
+                     const logs = dailyProduction.filter((p: any) => p.machine_id === m.id);
+                     const vol = logs.reduce((s: any, p: any) => s + p.quantity_produced, 0);
+                     const hours = logs.reduce((s: any, p: any) => s + p.working_hours, 0);
+                     return (
+                        <tr key={m.id} className="hover:bg-slate-50">
+                           <td className="py-3 px-3 uppercase font-bold text-slate-800 text-xs">{m.name}</td>
+                           <td className="py-3 px-3 text-slate-500 text-xs">{m.machine_type}</td>
+                           <td className="py-3 px-3 text-right font-mono font-black text-indigo-700">{vol.toLocaleString()}</td>
+                           <td className="py-3 px-3 text-right font-mono">{hours} hrs</td>
+                        </tr>
+                     );
+                  })}
+               </tbody>
+             </table>
+           </div>
+        </div>
+      )}
+
+      {reportType === "operators" && (
+        <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
+           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-6">
+             <div className="flex justify-between items-start border-b border-slate-100 pb-4">
+               <div>
+                 <h4 className="font-extrabold text-sm uppercase tracking-wider text-slate-800">Operator Performance & Payroll Audit</h4>
+                 <p className="text-xs text-slate-400 font-mono">Employee Volumes and Financial Allowances</p>
+               </div>
+               <button onClick={handlePrint} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 border border-slate-200 bg-white px-3.5 py-1.5 rounded-xl cursor-pointer shadow-sm transition-all"><Printer className="w-3.5 h-3.5" /> PRINT</button>
+             </div>
+             <table className="w-full text-left text-sm mt-4">
+               <thead>
+                 <tr className="border-b border-slate-200 bg-slate-50 text-[10px] uppercase text-slate-500 font-bold uppercase">
+                    <th className="py-2.5 px-3">Operator Name</th>
+                    <th className="py-2.5 px-3 text-right">Prod Volume (Units)</th>
+                    <th className="py-2.5 px-3 text-right">Base Pays</th>
+                    <th className="py-2.5 px-3 text-right">Unit Rate</th>
+                    <th className="py-2.5 px-3 text-right">Accrued Bonus</th>
+                    <th className="py-2.5 px-3 text-right text-indigo-700">Gross Liable</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-100 font-medium text-slate-600 border-b border-slate-100">
+                  {operators.map((o: any) => {
+                     const logs = dailyProduction.filter((p: any) => p.operator_id === o.id);
+                     const vol = logs.reduce((s: any, p: any) => s + p.quantity_produced, 0);
+                     const accrued = vol * o.bonus_rate_per_unit;
+                     const gross = o.monthly_base_salary + accrued;
+                     return (
+                        <tr key={o.id} className="hover:bg-slate-50">
+                           <td className="py-3 px-3 uppercase font-bold text-slate-800">{o.name}</td>
+                           <td className="py-3 px-3 text-right font-mono font-bold text-slate-700">{vol.toLocaleString()}</td>
+                           <td className="py-3 px-3 text-right font-mono text-slate-400">{formatPKR(o.monthly_base_salary)}</td>
+                           <td className="py-3 px-3 text-right font-mono text-slate-400">Rs.{o.bonus_rate_per_unit}</td>
+                           <td className="py-3 px-3 text-right font-mono text-emerald-600">{formatPKR(accrued)}</td>
+                           <td className="py-3 px-3 text-right font-mono font-black text-indigo-700 bg-slate-50/50">{formatPKR(gross)}</td>
+                        </tr>
+                     );
+                  })}
+               </tbody>
+             </table>
+           </div>
+        </div>
+      )}
+
     </div>
   );
 }

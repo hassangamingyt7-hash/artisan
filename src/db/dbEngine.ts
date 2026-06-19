@@ -32,6 +32,10 @@ interface DBStructure {
   payments: any[];
   receivables: any[];
   payables: any[];
+  roles_permissions: any[];
+  machines: any[];
+  operators: any[];
+  daily_production: any[];
   settings: any;
 }
 
@@ -152,6 +156,14 @@ const DEFAULT_DB_STATE: DBStructure = {
     { id: 1, supplier_id: 1, purchase_id: 1, amount: 34300, paid_amount: 34300, balance: 0, due_date: "2026-07-01" },
     { id: 2, supplier_id: 2, purchase_id: 2, amount: 17000, paid_amount: 0, balance: 17000, due_date: "2026-07-10" }
   ],
+  roles_permissions: [],
+  machines: [
+    { id: 1, name: "Tajima Master", machine_number: "MAC-01", machine_type: "20-Head Embroidery", status: "Running", installation_date: "2025-01-10" }
+  ],
+  operators: [
+    { id: 1, name: "Adnan Ali", assigned_machine_id: 1, bonus_rate_per_unit: 0.50, monthly_base_salary: 35000 }
+  ],
+  daily_production: [],
   settings: {
     company_name: "ARTISAN Embroidery Unit",
     logo_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&q=80",
@@ -206,6 +218,22 @@ function loadSandboxDB(): DBStructure {
 
       if (!sandboxCache!.invoice_items) {
         sandboxCache!.invoice_items = [];
+        mutated = true;
+      }
+      if (!sandboxCache!.roles_permissions) {
+        sandboxCache!.roles_permissions = [];
+        mutated = true;
+      }
+      if (!sandboxCache!.machines) {
+        sandboxCache!.machines = JSON.parse(JSON.stringify(DEFAULT_DB_STATE.machines));
+        mutated = true;
+      }
+      if (!sandboxCache!.operators) {
+        sandboxCache!.operators = JSON.parse(JSON.stringify(DEFAULT_DB_STATE.operators));
+        mutated = true;
+      }
+      if (!sandboxCache!.daily_production) {
+        sandboxCache!.daily_production = [];
         mutated = true;
       }
       if (mutated) {

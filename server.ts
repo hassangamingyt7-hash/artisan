@@ -13,7 +13,7 @@ import { initMySQLDB } from "./src/db/migrate.ts";
 import { createServer as createViteServer } from "vite";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "ARTISAN_SUPER_SECRET_ERP_JWT_TOKEN_2026";
 
 // Middlewares
@@ -1452,6 +1452,44 @@ app.post("/api/settings", authenticateJWT, authorizeRoles("admin", "manager"), a
 // =========================================================================
 // EMBED VITE DEV MODULES / PRODUCTION BUILD STATIC ROUTING
 // =========================================================================
+
+  // =========================================================================
+  // PRODUCTION MANAGEMENT ENHANCEMENTS
+  // =========================================================================
+
+  const generateCrud = (endpointName: string, tableName: string) => {
+    app.get(`/api/${endpointName}`, authenticateJWT, async (req: Request, res: Response) => {
+      try {
+        const list = await DB.queryAll<any>(tableName as any);
+        res.json(list);
+      } catch (err: any) { res.status(500).json({ error: err.message }); }
+    });
+    app.post(`/api/${endpointName}`, authenticateJWT, authorizeRoles("admin", "manager", "accountant", "production manager", "operator"), async (req: Request, res: Response) => {
+      try {
+        const record = await DB.insertRecord(tableName as any, req.body);
+        res.status(201).json(record);
+      } catch (err: any) { res.status(400).json({ error: err.message }); }
+    });
+    app.put(`/api/${endpointName}/:id`, authenticateJWT, authorizeRoles("admin", "manager", "accountant", "production manager", "operator"), async (req: Request, res: Response) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        const record = await DB.updateRecord(tableName as any, id, req.body);
+        res.json(record);
+      } catch (err: any) { res.status(400).json({ error: err.message }); }
+    });
+    app.delete(`/api/${endpointName}/:id`, authenticateJWT, authorizeRoles("admin"), async (req: Request, res: Response) => {
+      try {
+        const id = parseInt(req.params.id, 10);
+        await DB.deleteRecord(tableName as any, id);
+        res.json({ message: "Deleted successfully" });
+      } catch (err: any) { res.status(500).json({ error: err.message }); }
+    });
+  };
+
+  generateCrud("roles_permissions", "roles_permissions");
+  generateCrud("machines", "machines");
+  generateCrud("operators", "operators");
+  generateCrud("daily_production", "daily_production");
 
 async function bootstrap() {
   await initMySQLDB();
