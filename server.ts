@@ -2,12 +2,14 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
+import "dotenv/config";
 
 import express, { Request, Response, NextFunction } from "express";
 import path from "path";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { DB } from "./src/db/dbEngine.ts";
+import { initMySQLDB } from "./src/db/migrate.ts";
 import { createServer as createViteServer } from "vite";
 
 const app = express();
@@ -1433,6 +1435,8 @@ app.post("/api/settings", authenticateJWT, authorizeRoles("admin", "manager"), a
 // =========================================================================
 
 async function bootstrap() {
+  await initMySQLDB();
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

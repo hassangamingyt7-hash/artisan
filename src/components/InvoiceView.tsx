@@ -64,6 +64,98 @@ export default function InvoiceView({ invoices, orders, brands, userRole, onRefr
     }).format(amount);
   };
 
+  const handlePrintOrPdf = (isSavePdf: boolean) => {
+    const printContent = document.getElementById("invoice-layout-full-printable")?.innerHTML;
+    if (!printContent) return;
+
+    const iframeId = "invoice-printing-iframe-temp";
+    let iframe = document.getElementById(iframeId) as HTMLIFrameElement;
+    if (iframe) {
+      document.body.removeChild(iframe);
+    }
+    
+    iframe = document.createElement("iframe") as HTMLIFrameElement;
+    iframe.id = iframeId;
+    iframe.style.position = "absolute";
+    iframe.style.width = "0px";
+    iframe.style.height = "0px";
+    iframe.style.border = "none";
+    iframe.style.left = "-9999px";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow || iframe.contentDocument;
+    if (doc) {
+      const docToWrite = (doc as any).document || doc;
+      docToWrite.open();
+      
+      const titleText = "Tax Invoice - " + (editingInvoice ? editingInvoice.invoice_number : "");
+      
+      const parts = [
+        "<!DOCTYPE html>",
+        "<html>",
+        "  <head>",
+        "    <title>" + titleText + "</title>",
+        "    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap' rel='stylesheet' />",
+        "    <script src='https://cdn.tailwindcss.com'></script>",
+        "    <style>",
+        "      @media print {",
+        "        body {",
+        "          -webkit-print-color-adjust: exact !important;",
+        "          print-color-adjust: exact !important;",
+        "          padding: 10px;",
+        "        }",
+        "      }",
+        "      body {",
+        "        font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;",
+        "        background-color: #fff !important;",
+        "        color: #334155 !important;",
+        "        padding: 24px;",
+        "      }",
+        "      .font-mono {",
+        "        font-family: 'JetBrains Mono', monospace !important;",
+        "      }",
+        "      .lines-normal {",
+        "        line-height: 1.5;",
+        "      }",
+        "    </style>",
+        "  </head>",
+        "  <body>",
+        "    <div>",
+        printContent,
+        "    </div>",
+        "    <script>",
+        "      window.onload = function() {",
+        "        setTimeout(function() {",
+        "          window.focus();",
+        "          window.print();",
+        "          setTimeout(function() {",
+        "            window.parent.document.body.removeChild(window.frameElement);",
+        "          }, 1000);",
+        "        }, 800);",
+        "      };",
+        "    </script>",
+        "  </body>",
+        "</html>"
+      ];
+
+      docToWrite.write(parts.join("\n"));
+      docToWrite.close();
+
+      if (isSavePdf) {
+        const toast = document.createElement("div");
+        toast.className = "fixed bottom-5 right-5 bg-slate-900 border border-slate-800 text-white px-4 py-3 rounded-lg shadow-2xl z-[99999] text-xs transition-opacity duration-300 font-sans flex flex-col gap-1";
+        toast.innerHTML = '<strong class="text-blue-400">PDF Export Workflow:</strong><span>In the print dialog destination, select <strong>"Save as PDF"</strong> or <strong>"Print to PDF"</strong> to save.</span>';
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = "0";
+          setTimeout(() => {
+            if (toast.parentNode) document.body.removeChild(toast);
+          }, 300);
+        }, 5000);
+      }
+    }
+  };
+
   const handleToggleOrderSelection = (orderId: number) => {
     if (selectedOrderIds.includes(orderId)) {
       setSelectedOrderIds(selectedOrderIds.filter((id) => id !== orderId));
@@ -637,9 +729,7 @@ export default function InvoiceView({ invoices, orders, brands, userRole, onRefr
               <div className="flex gap-2">
                 <button
                   id="print-issued-invoice-btn"
-                  onClick={() => {
-                    window.print();
-                  }}
+                  onClick={() => handlePrintOrPdf(false)}
                   className="flex items-center gap-1.5 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-all cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5 text-slate-500" />
@@ -648,16 +738,14 @@ export default function InvoiceView({ invoices, orders, brands, userRole, onRefr
 
                 <button
                   id="save-pdf-issued-invoice-btn"
-                  onClick={() => {
-                    window.print();
-                  }}
+                  onClick={() => handlePrintOrPdf(true)}
                   className="flex items-center gap-1.5 border border-blue-200 text-blue-700 bg-white hover:bg-blue-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-all cursor-pointer"
                 >
                   <Receipt className="w-3.5 h-3.5 text-blue-500" />
                   <span>SAVE AS PDF</span>
                 </button>
               </div>
-              
+
               <button
                 id="invoice-viewer-close-btn"
                 onClick={() => setEditingInvoice(null)}

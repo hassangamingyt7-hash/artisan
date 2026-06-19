@@ -42,6 +42,7 @@ export default function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<string>("dashboard");
@@ -162,9 +163,13 @@ export default function App() {
         setToken(data.token);
       } else {
         setAuthError(data.error || "Authentication failed.");
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 500);
       }
     } catch (err) {
       setAuthError("Failed to establish server connection.");
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
     } finally {
       setAuthLoading(false);
     }
@@ -234,7 +239,7 @@ export default function App() {
   if (!token) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 selection:bg-blue-600 selection:text-white font-sans" id="login-screen-outer">
-        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-xl p-6 md:p-7 shadow-2xl relative overflow-hidden space-y-5">
+        <div className={`w-full max-w-sm bg-slate-900 border border-slate-800 rounded-xl p-6 md:p-7 shadow-2xl relative overflow-hidden space-y-5 ${isShaking ? 'animate-shake border-rose-500/50' : ''}`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
           
           <div className="text-center space-y-1.5 select-none animate-none">
