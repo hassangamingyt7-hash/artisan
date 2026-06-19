@@ -13,7 +13,7 @@ import { initMySQLDB } from "./src/db/migrate.ts";
 import { createServer as createViteServer } from "vite";
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "ARTISAN_SUPER_SECRET_ERP_JWT_TOKEN_2026";
 
 // Middlewares

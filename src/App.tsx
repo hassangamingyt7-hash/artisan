@@ -157,7 +157,13 @@ export default function App() {
         body: JSON.stringify({ email: loginUsername, username: loginUsername, password: loginPassword }),
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        throw new Error("API server is not running or returned HTML instead of JSON. Ensure your Node.js backend is active on Hostinger.");
+      }
+      
       if (res.ok) {
         localStorage.setItem("artisan_erp_token", data.token);
         setToken(data.token);
@@ -166,8 +172,8 @@ export default function App() {
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 500);
       }
-    } catch (err) {
-      setAuthError("Failed to establish server connection.");
+    } catch (err: any) {
+      setAuthError(err.message || "Failed to establish server connection.");
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
     } finally {
