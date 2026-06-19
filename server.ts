@@ -1160,22 +1160,19 @@ app.delete("/api/orders/:id", authenticateJWT, authorizeRoles("admin"), async (r
 
 
 // =========================================================================
-// INVOICES & GENERATION
+// STANDALONE INVOICES & GENERATION
 // =========================================================================
 
 app.get("/api/invoices", authenticateJWT, async (req: Request, res: Response) => {
   try {
     const list = await DB.queryAll<any>("invoices");
-    const brands = await DB.queryAll<any>("brands");
-    const customers = await DB.queryAll<any>("customers");
+    const allItems = await DB.queryAll<any>("invoice_items");
 
-    const enriched = list.map((item) => {
-      const b = brands.find((brand) => brand.id === Number(item.brand_id));
-      const c = customers.find((cust) => cust.id === Number(item.customer_id));
+    const enriched = list.map((invoice) => {
+      const items = allItems.filter(item => item.invoice_id === invoice.id);
       return {
-        ...item,
-        brand_name: b ? b.name : "N/A",
-        customer_name: c ? c.name : "N/A"
+        ...invoice,
+        items
       };
     });
 
@@ -1187,56 +1184,39 @@ app.get("/api/invoices", authenticateJWT, async (req: Request, res: Response) =>
 
 app.post("/api/invoices", authenticateJWT, authorizeRoles("admin", "manager", "accountant"), async (req: Request, res: Response) => {
   try {
-    const { brand_id, customer_id, invoice_date, total_amount, tax_rate, tax_amount, grand_total } = req.body;
+    const { items, ...invoiceData } = req.body;
     
-    let resolved_customer_id = Number(customer_id);
-    if (!resolved_customer_id && brand_id) {
-      const brand = await DB.queryById<any>("brands", Number(brand_id));
-      if (brand) {
-        const customers = await DB.queryAll<any>("customers");
-        const matchingCust = customers.find(c => c.name.toLowerCase() === brand.name.toLowerCase() || c.id === brand.id);
-        resolved_customer_id = matchingCust ? matchingCust.id : (customers[0]?.id || 1);
-      } else {
-        resolved_customer_id = 1;
-      }
-    } else if (!resolved_customer_id) {
-      resolved_customer_id = 1;
-    }
-
-    const resolved_grand_total = grand_total !== undefined ? Number(grand_total) : Number(total_amount);
-
     // Automatically auto-increment Custom Invoice Number based on records
     const list = await DB.queryAll<any>("invoices");
     const settings = await DB.getSettings();
     const nextNum = list.reduce((max, item) => {
-      const split = item.invoice_number.split("-");
+      const split = String(item.invoice_number || "").split("-");
       const num = parseInt(split[split.length - 1], 10);
-      return num > max ? num : max;
+      return (Number.isFinite(num) && num > max) ? num : max;
     }, 1000) + 1;
 
-    const invoice_number = `${settings.invoice_prefix || "ART8"}-2026-${nextNum}`;
-
+    const invoice_number = `${settings?.invoice_prefix || "ART8"}-2026-${nextNum}`;
+    
     const invoicePayload = {
-      ...req.body,
-      customer_id: resolved_customer_id,
-      grand_total: resolved_grand_total,
-      invoice_number,
-      items: typeof req.body.items === "string" ? req.body.items : JSON.stringify(req.body.items)
+      ...invoiceData,
+      invoice_number
     };
 
     const invoice = await DB.insertRecord("invoices", invoicePayload);
 
-    // Auto-journal entry to Receivables!
-    await DB.insertRecord("receivables", {
-      customer_id: resolved_customer_id,
-      invoice_id: invoice.id,
-      amount: resolved_grand_total,
-      amount_received: 0,
-      balance_remaining: resolved_grand_total,
-      due_date: invoice_date
-    });
+    // Insert items
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        await DB.insertRecord("invoice_items", {
+          ...item,
+          invoice_id: invoice.id
+        });
+      }
+    }
 
-    res.status(201).json(invoice);
+    const createdItems = (await DB.queryAll<any>("invoice_items")).filter(i => i.invoice_id === invoice.id);
+
+    res.status(201).json({ ...invoice, items: createdItems });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
@@ -1245,15 +1225,17 @@ app.post("/api/invoices", authenticateJWT, authorizeRoles("admin", "manager", "a
 app.delete("/api/invoices/:id", authenticateJWT, authorizeRoles("admin"), async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
+    
+    // Delete corresponding items manually
+    const allItems = await DB.queryAll<any>("invoice_items");
+    for (const item of allItems) {
+      if (item.invoice_id === id) {
+        await DB.deleteRecord("invoice_items", item.id);
+      }
+    }
+
     const success = await DB.deleteRecord("invoices", id);
     if (!success) return res.status(404).json({ error: "Invoice not found" }) as any;
-
-    // Delete corresponding receivables journal
-    const receivables = await DB.queryAll<any>("receivables");
-    const item = receivables.find((r) => r.invoice_id === id);
-    if (item) {
-      await DB.deleteRecord("receivables", item.id);
-    }
 
     res.json({ message: "Invoice deleted successfully" });
   } catch (err: any) {
@@ -1267,52 +1249,33 @@ app.put("/api/invoices/:id", authenticateJWT, authorizeRoles("admin", "manager",
     const existing = await DB.queryById<any>("invoices", id);
     if (!existing) return res.status(404).json({ error: "Invoice not found" }) as any;
 
-    const { brand_id, customer_id, total_amount, grand_total } = req.body;
+    const { items, ...invoiceData } = req.body;
 
-    let resolved_customer_id = customer_id !== undefined ? Number(customer_id) : existing.customer_id;
-    if (!resolved_customer_id && brand_id) {
-      const brand = await DB.queryById<any>("brands", Number(brand_id));
-      if (brand) {
-        const customers = await DB.queryAll<any>("customers");
-        const matchingCust = customers.find(c => c.name.toLowerCase() === brand.name.toLowerCase() || c.id === brand.id);
-        resolved_customer_id = matchingCust ? matchingCust.id : (customers[0]?.id || 1);
+    const result = await DB.updateRecord("invoices", id, invoiceData);
+
+    if (Array.isArray(items)) {
+      const allItems = await DB.queryAll<any>("invoice_items");
+      for (const item of allItems) {
+        if (item.invoice_id === id) {
+          await DB.deleteRecord("invoice_items", item.id);
+        }
+      }
+      for (const item of items) {
+        await DB.insertRecord("invoice_items", {
+          ...item,
+          invoice_id: id
+        });
       }
     }
-    if (!resolved_customer_id) {
-      resolved_customer_id = existing.customer_id || 1;
-    }
 
-    const resolved_grand_total = grand_total !== undefined ? Number(grand_total) : (total_amount !== undefined ? Number(total_amount) : existing.grand_total || existing.total_amount);
+    const updatedItems = (await DB.queryAll<any>("invoice_items")).filter(i => i.invoice_id === id);
 
-    const payload = {
-      ...req.body,
-      customer_id: resolved_customer_id,
-      grand_total: resolved_grand_total,
-      items: req.body.items !== undefined ? (typeof req.body.items === "string" ? req.body.items : JSON.stringify(req.body.items)) : existing.items
-    };
-
-    const result = await DB.updateRecord("invoices", id, payload);
-
-    // Update corresponding receivables journal
-    const receivables = await DB.queryAll<any>("receivables");
-    const item = receivables.find((r) => r.invoice_id === id);
-    if (item) {
-      const amount = resolved_grand_total;
-      const due_date = req.body.invoice_date !== undefined ? req.body.invoice_date : item.due_date;
-      
-      await DB.updateRecord("receivables", item.id, {
-        customer_id: resolved_customer_id,
-        amount,
-        balance_remaining: amount - (item.amount_received || 0),
-        due_date
-      });
-    }
-
-    res.json(result);
+    res.json({ ...result, items: updatedItems });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 
 // =========================================================================

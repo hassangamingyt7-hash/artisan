@@ -137,7 +137,7 @@ export default function CustomerView({ customers, userRole, onRefresh, onAdd, on
   };
 
   // Double check authorization roles
-  const canModify = userRole === "admin" || userRole === "manager";
+  const canModify = ["admin", "manager", "accountant", "accounts_manager"].includes(userRole);
 
   return (
     <div className="p-4 md:p-6 space-y-4 max-w-7xl mx-auto" id="customers-view-panel">

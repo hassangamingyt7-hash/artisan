@@ -112,10 +112,34 @@ export async function initMySQLDB() {
     await checkTable("invoices", `CREATE TABLE invoices (
       id INT AUTO_INCREMENT PRIMARY KEY,
       user_id INT,
-      invoice_number VARCHAR(100), invoice_date VARCHAR(50), brand_id INT, customer_id INT,
-      items TEXT, quantity_total INT, total_amount DECIMAL(12,2), tax_rate DECIMAL(5,2), tax_amount DECIMAL(10,2),
-      withholding_tax DECIMAL(10,2), withholding_rate DECIMAL(5,2), discount DECIMAL(10,2), grand_total DECIMAL(12,2),
-      notes TEXT, orders TEXT, orders_list TEXT, subtotal DECIMAL(12,2)
+      invoice_number VARCHAR(100),
+      invoice_date VARCHAR(50),
+      brand_name VARCHAR(255),
+      ntn VARCHAR(100),
+      stn VARCHAR(100),
+      contact_person VARCHAR(255),
+      phone VARCHAR(100),
+      email VARCHAR(255),
+      address TEXT,
+      po_number VARCHAR(100),
+      subtotal DECIMAL(12,2),
+      gst_amount DECIMAL(12,2),
+      grand_total DECIMAL(12,2),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`);
+
+    await checkTable("invoice_items", `CREATE TABLE invoice_items (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      invoice_id INT,
+      user_id INT,
+      description TEXT,
+      quantity DECIMAL(10,2),
+      unit_mtr VARCHAR(50),
+      rate DECIMAL(10,2),
+      amount DECIMAL(12,2),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`);
 
     await checkTable("payments", `CREATE TABLE payments (

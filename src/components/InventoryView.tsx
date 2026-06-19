@@ -114,7 +114,7 @@ export default function InventoryView({ inventory, suppliers, userRole, onRefres
     }
   };
 
-  const canModify = userRole === "admin" || userRole === "manager";
+  const canModify = ["admin", "manager", "store_manager"].includes(userRole);
 
   return (
     <div className="p-4 md:p-5 space-y-4 max-w-7xl mx-auto" id="inventory-view-panel">

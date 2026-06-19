@@ -132,7 +132,7 @@ export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, on
     }
   };
 
-  const canModify = userRole === "admin" || userRole === "manager";
+  const canModify = ["admin", "manager", "accountant", "accounts_manager", "store_manager"].includes(userRole);
 
   return (
     <div className="p-4 md:p-5 space-y-4 max-w-7xl mx-auto" id="suppliers-view-panel">

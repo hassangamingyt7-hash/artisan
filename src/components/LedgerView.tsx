@@ -182,7 +182,7 @@ export default function LedgerView({ inventory, orders, userRole, token, onRefre
   const totalIn = filteredLedger.reduce((sum, entry) => sum + Number(entry.qty_in || 0), 0);
   const totalOut = filteredLedger.reduce((sum, entry) => sum + Number(entry.qty_out || 0), 0);
 
-  const canModify = ["admin", "manager"].includes(userRole);
+  const canModify = ["admin", "manager", "store_manager", "accounts_manager"].includes(userRole);
 
   const formatPKR = (amount: number) => {
     return new Intl.NumberFormat("en-PK", {

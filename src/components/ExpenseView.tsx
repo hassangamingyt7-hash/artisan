@@ -105,7 +105,7 @@ export default function ExpenseView({ expenses, userRole, onRefresh, onAdd, onEd
     }
   };
 
-  const canModify = ["admin", "manager", "accountant"].includes(userRole);
+  const canModify = ["admin", "manager", "accountant", "accounts_manager"].includes(userRole);
   const totalExpensesSum = filtered.reduce((sum, item) => sum + Number(item.amount), 0);
 
   return (

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type UserRole = "admin" | "manager" | "accountant";
+export type UserRole = "admin" | "manager" | "accountant" | "accounts_manager" | "store_manager";
 
 export interface User {
   id: number;
@@ -109,44 +109,33 @@ export interface Order {
 }
 
 export interface InvoiceItem {
-  id?: string;
+  id?: number;
   description: string;
   quantity: number;
+  unit_mtr: string;
   rate: number;
-  total: number;
+  amount: number;
 }
 
 export interface Invoice {
   id: number;
   invoice_number: string;
   invoice_date: string;
-  due_date: string;
-  brand_id: number;
-  brand_name?: string;
-  customer_id: number;
-  customer_name?: string;
-  items: string; // JSON String of InvoiceItem[]
-  quantity_total: number;
+  brand_name: string;
+  ntn: string;
+  stn: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  address: string;
+  po_number: string;
+  items: InvoiceItem[] | string;
   subtotal: number;
-  total_amount: number;
-  tax_rate: number;
-  tax_amount: number;
-  withholding_rate: number;
-  withholding_tax: number;
-  discount: number;
+  gst_amount: number;
   grand_total: number;
-  payment_status: "Paid" | "Partial" | "Unpaid";
-  notes: string;
-  orders?: number[];
-  orders_list?: {
-    id: number;
-    order_number: string;
-    design_name: string;
-    design_code: string;
-    quantity: number;
-    rate: number;
-    total_amount: number;
-  }[];
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Payment {

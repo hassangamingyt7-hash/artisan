@@ -90,7 +90,7 @@ export default function BrandView({ brands, userRole, onRefresh, onAdd, onEdit, 
     }
   };
 
-  const canModify = userRole === "admin" || userRole === "manager";
+  const canModify = ["admin", "manager", "accounts_manager"].includes(userRole);
 
   return (
     <div className="p-4 md:p-5 space-y-4 max-w-7xl mx-auto" id="brands-view-panel">

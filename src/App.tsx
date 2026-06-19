@@ -38,8 +38,8 @@ export default function App() {
   const [userRole, setUserRole] = useState<string>("");
   
   // Login Inputs
-  const [loginUsername, setLoginUsername] = useState("hassan");
-  const [loginPassword, setLoginPassword] = useState("hassan321");
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -478,8 +478,6 @@ export default function App() {
           {activeTab === "invoices" && (
             <InvoiceView 
               invoices={invoices} 
-              orders={orders}
-              brands={brands}
               userRole={userRole}
               onRefresh={fetchSyncAllData}
               onAddInvoice={(data) => handleMutateEntity("/api/invoices", "POST", data)}

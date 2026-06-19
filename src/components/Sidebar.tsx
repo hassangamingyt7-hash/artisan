@@ -32,22 +32,22 @@ interface SidebarProps {
 export default function Sidebar({ currentTab, setTab, userRole, isOpen, onClose }: SidebarProps) {
   const menuItems = [
     // Core
-    { id: "dashboard", label: "Dashboard", icon: LayoutGrid, roles: ["admin", "manager", "accountant"], category: "Core" },
-    { id: "customers", label: "Customers Ledger", icon: Users, roles: ["admin", "manager", "accountant"], category: "Core" },
-    { id: "brands", label: "Brands Directory", icon: Award, roles: ["admin", "manager", "accountant"], category: "Core" },
-    { id: "suppliers", label: "Suppliers Directory", icon: Truck, roles: ["admin", "manager", "accountant"], category: "Core" },
+    { id: "dashboard", label: "Dashboard", icon: LayoutGrid, roles: ["admin", "manager", "accountant", "accounts_manager", "store_manager"], category: "Core" },
+    { id: "customers", label: "Customers Ledger", icon: Users, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Core" },
+    { id: "brands", label: "Brands Directory", icon: Award, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Core" },
+    { id: "suppliers", label: "Suppliers Directory", icon: Truck, roles: ["admin", "manager", "accountant", "accounts_manager", "store_manager"], category: "Core" },
     
     // Inventory & Production
-    { id: "inventory", label: "Thread Inventory", icon: Boxes, roles: ["admin", "manager", "accountant"], category: "Inventory & Production" },
-    { id: "ledger", label: "Stock Ledger", icon: History, roles: ["admin", "manager", "accountant"], category: "Inventory & Production" },
-    { id: "orders", label: "Order Management", icon: FileSpreadsheet, roles: ["admin", "manager", "accountant"], category: "Inventory & Production" },
-    { id: "purchases", label: "Purchases", icon: ShoppingCart, roles: ["admin", "manager", "accountant"], category: "Inventory & Production" },
+    { id: "inventory", label: "Thread Inventory", icon: Boxes, roles: ["admin", "manager", "accountant", "store_manager"], category: "Inventory & Production" },
+    { id: "ledger", label: "Stock Ledger", icon: History, roles: ["admin", "manager", "accountant", "store_manager"], category: "Inventory & Production" },
+    { id: "orders", label: "Order Management", icon: FileSpreadsheet, roles: ["admin", "manager", "accountant", "store_manager"], category: "Inventory & Production" },
+    { id: "purchases", label: "Purchases", icon: ShoppingCart, roles: ["admin", "manager", "accountant", "store_manager"], category: "Inventory & Production" },
     
     // Finance
-    { id: "expenses", label: "Expenses Ledger", icon: CreditCard, roles: ["admin", "manager", "accountant"], category: "Finance" },
-    { id: "payments", label: "Payments & Vouchers", icon: Wallet, roles: ["admin", "manager", "accountant"], category: "Finance" },
-    { id: "invoices", label: "Invoice Engine", icon: Receipt, roles: ["admin", "manager", "accountant"], category: "Finance" },
-    { id: "reports", label: "Reporting Engine", icon: BarChart3, roles: ["admin", "manager", "accountant"], category: "Finance" },
+    { id: "expenses", label: "Expenses Ledger", icon: CreditCard, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Finance" },
+    { id: "payments", label: "Payments & Vouchers", icon: Wallet, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Finance" },
+    { id: "invoices", label: "Invoice Engine", icon: Receipt, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Finance" },
+    { id: "reports", label: "Reporting Engine", icon: BarChart3, roles: ["admin", "manager", "accountant", "accounts_manager"], category: "Finance" },
     { id: "settings", label: "System Settings", icon: Settings, roles: ["admin", "manager"], category: "Finance" },
     { id: "users", label: "User Management", icon: Users, roles: ["admin"], category: "Finance" },
   ];
@@ -72,9 +72,6 @@ export default function Sidebar({ currentTab, setTab, userRole, isOpen, onClose 
         {/* Sidebar Brand Header */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-2 select-none">
-            <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-base italic text-white shadow-md shadow-blue-900/20">
-              A8
-            </div>
             <div>
               <h1 className="font-bold text-sm tracking-tight text-white leading-none">ARTISAN EMB</h1>
               <span className="text-[9px] text-slate-500 font-mono tracking-wider uppercase font-semibold">ERP System</span>

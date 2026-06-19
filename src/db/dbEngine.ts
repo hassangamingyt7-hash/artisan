@@ -28,6 +28,7 @@ interface DBStructure {
   expenses: any[];
   orders: any[];
   invoices: any[];
+  invoice_items: any[];
   payments: any[];
   receivables: any[];
   payables: any[];
@@ -137,10 +138,8 @@ const DEFAULT_DB_STATE: DBStructure = {
     { id: 3, order_number: "ORD-1003", brand_id: 3, design_name: "Summer Lawn Sleeves Motif", design_code: "SL-640", quantity: 2000, rate: 45, total_amount: 90000, delivery_date: "2026-06-30", status: "Pending" },
     { id: 4, order_number: "ORD-1004", brand_id: 1, design_name: "Geometrical Panel Front", design_code: "GEO-01", quantity: 500, rate: 110, total_amount: 55000, delivery_date: "2026-06-14", status: "Delivered" }
   ],
-  invoices: [
-    { id: 1, invoice_number: "INV-2026-001", invoice_date: "2026-06-14", brand_id: 1, customer_id: 1, items: JSON.stringify([{ description: "Geometrical Panel Front Embroidery (GEO-01)", quantity: 500, rate: 110, total: 55000 }]), quantity_total: 500, total_amount: 55000, tax_rate: 17, tax_amount: 9350, grand_total: 64350, notes: "Delivered via artisan rider. Tax invoice includes 17% Standard GST." },
-    { id: 2, invoice_number: "INV-2026-002", invoice_date: "2026-06-20", brand_id: 2, customer_id: 2, items: JSON.stringify([{ description: "Symmetric Baroque Neckline v2 (BRQ-202)", quantity: 800, rate: 150, total: 120000 }]), quantity_total: 800, total_amount: 120000, tax_rate: 17, tax_amount: 20400, grand_total: 140400, notes: "Order Completed and Invoiced." }
-  ],
+  invoices: [],
+  invoice_items: [],
   payments: [
     { id: 1, type: "receipt", entity_type: "customer", entity_id: 1, amount: 64350, payment_date: "2026-06-15", payment_method: "Bank Transfer", reference_number: "HBL-992144", notes: "Cleared full payment for INV-202s-001" },
     { id: 2, type: "payment", entity_type: "supplier", entity_id: 1, amount: 34300, payment_date: "2026-06-03", payment_method: "Cheque", reference_number: "CHQ-00124", notes: "Payment for PO-2026-001" }
@@ -205,6 +204,10 @@ function loadSandboxDB(): DBStructure {
         mutated = true;
       }
 
+      if (!sandboxCache!.invoice_items) {
+        sandboxCache!.invoice_items = [];
+        mutated = true;
+      }
       if (mutated) {
         fs.writeFileSync(SANDBOX_DB_PATH, JSON.stringify(sandboxCache, null, 2), "utf-8");
       }

@@ -178,7 +178,7 @@ export default function PurchaseView({ purchases, suppliers, userRole, onRefresh
     }
   };
 
-  const canModify = ["admin", "manager", "accountant"].includes(userRole);
+  const canModify = ["admin", "manager", "accountant", "accounts_manager", "store_manager"].includes(userRole);
 
   return (
     <div className="p-4 md:p-5 space-y-4 max-w-7xl mx-auto" id="purchases-view-panel">
