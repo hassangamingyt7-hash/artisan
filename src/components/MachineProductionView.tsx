@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Settings, Plus, Search, Trash2, Edit3, Save, X, Activity } from "lucide-react";
 import { Machine, Operator, DailyProduction } from "../types";
 
@@ -9,7 +10,8 @@ export default function MachineProductionView({
 }: any) {
   const [activeSubTab, setActiveSubTab] = useState<"machines" | "production">("production");
   const [search, setSearch] = useState("");
-  const [dateFilter, setDateFilter] = useState("All Time");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const canModify = ["admin", "manager", "production manager", "operator"].includes(userRole);
 
   // Machine Modal
@@ -104,28 +106,10 @@ export default function MachineProductionView({
 
   // Filtering
   const filteredMachines = machines.filter((m: any) => m.name.toLowerCase().includes(search.toLowerCase()) || m.machine_number.toLowerCase().includes(search.toLowerCase()));
-  const filteredProd = dailyProduction.filter((p: any) => {
+  const timeFilteredProd = filterByDateRange(dailyProduction, "date", dateFilter, customDate);
+  const filteredProd = timeFilteredProd.filter((p: any) => {
     const mMatch = machines.find((m: any) => m.id === p.machine_id)?.name.toLowerCase().includes(search.toLowerCase());
-    const match = mMatch || p.brand_name.toLowerCase().includes(search.toLowerCase()) || p.design_name.toLowerCase().includes(search.toLowerCase());
-    
-    // Simple date filter logic
-    let dateMatch = true;
-    const today = new Date();
-    const todayStr = today.toISOString().substring(0, 10);
-    
-    if (dateFilter === "Today") dateMatch = p.date === todayStr;
-    else if (dateFilter === "Yesterday") {
-      const y = new Date(); y.setDate(today.getDate() - 1);
-      dateMatch = p.date === y.toISOString().substring(0, 10);
-    } else if (dateFilter === "This Week") {
-      const w = new Date(); w.setDate(today.getDate() - 7);
-      dateMatch = new Date(p.date) >= w;
-    } else if (dateFilter === "This Month") {
-      const m = new Date(); m.setMonth(today.getMonth() - 1);
-      dateMatch = new Date(p.date) >= m;
-    }
-    
-    return match && dateMatch;
+    return mMatch || p.brand_name.toLowerCase().includes(search.toLowerCase()) || p.design_name.toLowerCase().includes(search.toLowerCase());
   });
 
   return (
@@ -149,15 +133,15 @@ export default function MachineProductionView({
           <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-md text-sm outline-none focus:border-indigo-500" />
         </div>
         
-        {activeSubTab === "production" && (
-          <select value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="border border-slate-200 rounded-md px-3 py-2 text-sm outline-none font-medium">
-            <option>All Time</option>
-            <option>Today</option>
-            <option>Yesterday</option>
-            <option>This Week</option>
-            <option>This Month</option>
-          </select>
-        )}
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(activeSubTab === "production" ? filteredProd : filteredMachines, activeSubTab)}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
 
         <button onClick={() => activeSubTab === "machines" ? exportExcel(filteredMachines, "Machines") : exportExcel(filteredProd, "Production_Logs")} className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors shadow-sm shrink-0">
           Export Excel

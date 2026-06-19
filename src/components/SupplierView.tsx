@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Plus, Edit3, Trash2, Search, ClipboardList, Phone, User, MapPin, X, Printer, FileSpreadsheet } from "lucide-react";
 import { Supplier } from "../types.ts";
 
@@ -18,6 +19,8 @@ interface SupplierViewProps {
 
 export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, onEdit, onDelete }: SupplierViewProps) {
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -39,7 +42,8 @@ export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, on
     supplier_type: "Thread",
   });
 
-  const filtered = suppliers.filter((s) => {
+  const timeFiltered = filterByDateRange(suppliers, "created_at", dateFilter, customDate);
+  const filtered = timeFiltered.filter((s) => {
     const nameStr = s.name || "";
     const contactStr = s.contact_person || "";
     const typeStr = s.supplier_type || "";
@@ -169,7 +173,17 @@ export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, on
         </div>
 
         <div className="overflow-x-auto text-[11px] font-medium text-slate-700">
-          <table className="w-full text-left" id="suppliers-register-table">
+          
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(filtered, "supplier")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left" id="suppliers-register-table">
             <thead>
               <tr className="border-b border-slate-200 text-[10px] text-slate-400 uppercase tracking-widest font-mono bg-slate-50/60">
                 <th className="py-2.5 px-4 select-none">Vendor Detail</th>

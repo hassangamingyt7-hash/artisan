@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Plus, Search, Tag, Wallet, CheckSquare, X, DollarSign, Calendar, ClipboardList, Info } from "lucide-react";
 import { Payment, Customer, Supplier } from "../types.ts";
 
@@ -18,6 +19,8 @@ interface PaymentViewProps {
 
 export default function PaymentView({ payments, customers, suppliers, userRole, onRefresh, onAddPayment }: PaymentViewProps) {
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [typeFilter, setTypeFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
 
@@ -33,7 +36,8 @@ export default function PaymentView({ payments, customers, suppliers, userRole, 
     notes: "",
   });
 
-  const filtered = payments.filter((p) => {
+  const timeFiltered = filterByDateRange(payments, "payment_date", dateFilter, customDate);
+  const filtered = timeFiltered.filter((p) => {
     const matchesSearch =
       p.notes.toLowerCase().includes(search.toLowerCase()) ||
       (p.reference_number && p.reference_number.toLowerCase().includes(search.toLowerCase()));
@@ -171,7 +175,17 @@ export default function PaymentView({ payments, customers, suppliers, userRole, 
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left" id="payments-vouchers-register-table">
+          
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(filtered, "payment")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left" id="payments-vouchers-register-table">
             <thead>
               <tr className="border-b border-slate-150 text-[10px] text-slate-400 uppercase tracking-widest font-mono bg-slate-50/20 select-none">
                 <th className="py-2.5 px-4 select-none">Voucher No</th>

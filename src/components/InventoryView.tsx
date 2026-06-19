@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Plus, Edit3, Trash2, Search, Filter, Boxes, AlertTriangle, CheckCircle, Flame, X } from "lucide-react";
 import { ThreadInventory, Supplier } from "../types.ts";
 
@@ -19,6 +20,8 @@ interface InventoryViewProps {
 
 export default function InventoryView({ inventory, suppliers, userRole, onRefresh, onAdd, onEdit, onDelete }: InventoryViewProps) {
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -36,7 +39,8 @@ export default function InventoryView({ inventory, suppliers, userRole, onRefres
     cost_per_cone: 350,
   });
 
-  const filtered = inventory.filter((item) => {
+  const timeFiltered = filterByDateRange(inventory, "created_at", dateFilter, customDate);
+  const filtered = timeFiltered.filter((item) => {
     const shadeCodeStr = item.shade_code || "";
     const shadeNameStr = item.shade_name || "";
     const brandStr = item.brand || "";
@@ -169,7 +173,17 @@ export default function InventoryView({ inventory, suppliers, userRole, onRefres
       {/* Inventory table */}
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden text-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left" id="inventory-shades-table">
+          
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(filtered, "inventory")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left" id="inventory-shades-table">
             <thead>
               <tr className="border-b border-slate-200 text-[10px] text-slate-400 uppercase tracking-widest font-mono bg-slate-50/60">
                 <th className="py-2.5 px-4 select-none">Shade Code</th>

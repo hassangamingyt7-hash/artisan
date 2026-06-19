@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Plus, Edit3, Trash2, Search, FileText, ChevronRight, X, Phone, Mail, MapPin, Printer, ClipboardList } from "lucide-react";
 import { Customer } from "../types.ts";
 
@@ -18,6 +19,8 @@ interface CustomerViewProps {
 
 export default function CustomerView({ customers, userRole, onRefresh, onAdd, onEdit, onDelete }: CustomerViewProps) {
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   
@@ -41,7 +44,8 @@ export default function CustomerView({ customers, userRole, onRefresh, onAdd, on
     notes: "",
   });
 
-  const filtered = customers.filter((c) => {
+  const timeFiltered = filterByDateRange(customers, "created_at", dateFilter, customDate);
+  const filtered = timeFiltered.filter((c) => {
     const nameStr = c.name || "";
     const companyStr = c.company_name || "";
     const phoneStr = c.phone || "";
@@ -174,7 +178,17 @@ export default function CustomerView({ customers, userRole, onRefresh, onAdd, on
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left" id="customers-register-table">
+          
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(filtered, "customer")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left" id="customers-register-table">
             <thead>
               <tr className="border-b border-slate-200 text-[9px] text-slate-400 uppercase tracking-wider font-mono bg-slate-50/20">
                 <th className="py-2 px-4 select-none">Client Detail</th>

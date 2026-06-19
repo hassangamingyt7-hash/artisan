@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Plus, Edit3, Trash2, Search, Play, CheckSquare, CheckCircle, Truck, X, Eye } from "lucide-react";
 import { Order, Brand } from "../types.ts";
 
@@ -19,6 +20,8 @@ interface OrderViewProps {
 
 export default function OrderView({ orders, brands, userRole, onRefresh, onAdd, onEdit, onDelete }: OrderViewProps) {
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [statusFilter, setStatusFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -34,7 +37,8 @@ export default function OrderView({ orders, brands, userRole, onRefresh, onAdd, 
     status: "Pending",
   });
 
-  const filtered = orders.filter((o) => {
+  const timeFiltered = filterByDateRange(orders, "order_date", dateFilter, customDate);
+  const filtered = timeFiltered.filter((o) => {
     const designNameStr = o.design_name || "";
     const designCodeStr = o.design_code || "";
     const orderNumStr = o.order_number || "";
@@ -186,7 +190,17 @@ export default function OrderView({ orders, brands, userRole, onRefresh, onAdd, 
       {/* Orders list Grid table representation */}
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden animate-in fade-in duration-205">
         <div className="overflow-x-auto">
-          <table className="w-full text-left" id="orders-main-register-table">
+          
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(filtered, "order")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left" id="orders-main-register-table">
             <thead>
               <tr className="border-b border-slate-200 text-[10px] text-slate-400 uppercase tracking-widest font-mono bg-slate-50/60 select-none">
                 <th className="py-2.5 px-4 select-none">Order Number ID</th>

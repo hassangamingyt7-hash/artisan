@@ -127,9 +127,12 @@ export async function initMySQLDB() {
       subtotal DECIMAL(12,2),
       gst_amount DECIMAL(12,2),
       grand_total DECIMAL(12,2),
+      notes TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`);
+    try { await connection.query("ALTER TABLE invoices ADD COLUMN notes TEXT"); } catch(e) {}
+
 
     await checkTable("invoice_items", `CREATE TABLE invoice_items (
       id INT AUTO_INCREMENT PRIMARY KEY,

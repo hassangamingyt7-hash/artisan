@@ -35,6 +35,7 @@ import {
   Cell,
 } from "recharts";
 import { DashboardStats, Machine, Operator, DailyProduction } from "../types.ts";
+import TableActionControls, { exportToExcel } from "./TableActionControls.tsx";
 
 interface DashboardProps {
   stats: DashboardStats | null;
@@ -53,6 +54,9 @@ export default function DashboardView({
   loading, 
   onNavigate 
 }: DashboardProps) {
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
+
   if (loading || !stats) {
     return (
       <div className="p-6 space-y-6">
@@ -176,6 +180,15 @@ export default function DashboardView({
       )}
 
       {/* 2. Primary KPI grid */}
+      <TableActionControls 
+        onPrint={() => window.print()} 
+        onPdf={() => window.print()} 
+        onExcel={() => exportToExcel([financials], "dashboard_stats")}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        customDateRange={customDate}
+        setCustomDateRange={setCustomDate}
+      />
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {summaryCards.map((card, idx) => (
           <div

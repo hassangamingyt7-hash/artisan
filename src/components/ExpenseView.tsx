@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Plus, Edit3, Trash2, Search, Wallet, Tag, Calendar, CreditCard, X, DollarSign } from "lucide-react";
 import { Expense } from "../types.ts";
 
@@ -18,6 +19,8 @@ interface ExpenseViewProps {
 
 export default function ExpenseView({ expenses, userRole, onRefresh, onAdd, onEdit, onDelete }: ExpenseViewProps) {
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [categoryFilter, setCategoryFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -42,7 +45,8 @@ export default function ExpenseView({ expenses, userRole, onRefresh, onAdd, onEd
     "Miscellaneous",
   ];
 
-  const filtered = expenses.filter((e) => {
+  const timeFiltered = filterByDateRange(expenses, "expense_date", dateFilter, customDate);
+  const filtered = timeFiltered.filter((e) => {
     const descStr = e.description || "";
     const matchesSearch = descStr.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = categoryFilter === "" || e.category === categoryFilter;
@@ -174,7 +178,17 @@ export default function ExpenseView({ expenses, userRole, onRefresh, onAdd, onEd
       {/* Main Grid List */}
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden text-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left" id="expenses-main-register-table">
+          
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(filtered, "expense")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left" id="expenses-main-register-table">
             <thead>
               <tr className="border-b border-slate-200 text-[10px] text-slate-400 uppercase tracking-widest font-mono bg-slate-50/60 select-none">
                 <th className="py-2.5 px-4 select-none">Spent Date</th>

@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Plus, Edit3, Trash2, Search, Calendar, CheckSquare, X, AlertCircle } from "lucide-react";
 import { Purchase, Supplier } from "../types.ts";
 
@@ -21,6 +22,8 @@ interface PurchaseViewProps {
 
 export default function PurchaseView({ purchases, suppliers, userRole, onRefresh, onAdd, onEdit, onDelete }: PurchaseViewProps) {
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -37,7 +40,8 @@ export default function PurchaseView({ purchases, suppliers, userRole, onRefresh
     { shade_code: "", shade_name: "", cones: 10, rate: 350 }
   ]);
 
-  const filtered = purchases.filter((p) => {
+  const timeFiltered = filterByDateRange(purchases, "purchase_date", dateFilter, customDate);
+  const filtered = timeFiltered.filter((p) => {
     const productStr = p.product_name || "";
     const purchaseNumStr = p.purchase_number || "";
     return (
@@ -216,7 +220,17 @@ export default function PurchaseView({ purchases, suppliers, userRole, onRefresh
       {/* Main Table Register */}
       <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden text-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left" id="purchases-main-table">
+          
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(filtered, "purchase")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left" id="purchases-main-table">
             <thead>
               <tr className="border-b border-slate-200 text-[10px] text-slate-400 uppercase tracking-widest font-mono bg-slate-50/60 select-none">
                 <th className="py-2.5 px-4">PO Number</th>

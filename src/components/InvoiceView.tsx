@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Plus, Trash2, Search, Printer, Receipt, Eye, X, Save, Edit3 } from "lucide-react";
 import { Invoice, InvoiceItem } from "../types";
 
@@ -13,6 +14,8 @@ interface InvoiceViewProps {
 
 export default function InvoiceView({ invoices, userRole, onRefresh, onAddInvoice, onEditInvoice, onDeleteInvoice }: InvoiceViewProps) {
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [showModal, setShowModal] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
@@ -31,7 +34,8 @@ export default function InvoiceView({ invoices, userRole, onRefresh, onAddInvoic
   
   const [items, setItems] = useState<InvoiceItem[]>([]);
 
-  const filteredInvoices = invoices.filter((i) =>
+  const timeFilteredInvoices = filterByDateRange(invoices, "invoice_date", dateFilter, customDate);
+  const filteredInvoices = timeFilteredInvoices.filter((i) =>
     (i.invoice_number || "").toLowerCase().includes(search.toLowerCase()) ||
     (i.brand_name || "").toLowerCase().includes(search.toLowerCase()) ||
     (i.po_number || "").toLowerCase().includes(search.toLowerCase())
@@ -117,6 +121,8 @@ export default function InvoiceView({ invoices, userRole, onRefresh, onAddInvoic
     return { subtotal, gst_amount, grand_total };
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.some(i => !i.description)) {
@@ -124,6 +130,7 @@ export default function InvoiceView({ invoices, userRole, onRefresh, onAddInvoic
       return;
     }
     
+    setIsSaving(true);
     const { subtotal, gst_amount, grand_total } = calculateTotals();
     
     try {
@@ -151,9 +158,11 @@ export default function InvoiceView({ invoices, userRole, onRefresh, onAddInvoic
       }
       setShowModal(false);
       onRefresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to save invoice.");
+      alert("Failed to save invoice: " + err.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -246,7 +255,17 @@ export default function InvoiceView({ invoices, userRole, onRefresh, onAddInvoic
 
           {/* Items Table */}
           <div className="mb-8 overflow-hidden rounded-md border border-slate-200 print:border-slate-800">
-            <table className="w-full text-left border-collapse">
+            
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(filteredInvoices, "invoice")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b-2 border-slate-800 text-sm bg-slate-50 print:bg-transparent">
                   <th className="py-3 px-3 font-bold text-slate-800 uppercase tracking-wider">#</th>
@@ -561,16 +580,16 @@ export default function InvoiceView({ invoices, userRole, onRefresh, onAddInvoic
                   </div>
                 </div>
               </div>
+
+              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 shrink-0 mt-6">
+                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 bg-white border border-slate-200 rounded-lg transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" disabled={isSaving} className="px-5 py-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-lg transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50">
+                  <Save className="w-4 h-4" /> {isSaving ? "Saving..." : (editingInvoice ? "Update Invoice" : "Save Invoice")}
+                </button>
+              </div>
             </form>
-            
-            <div className="p-4 border-t border-slate-100 bg-white flex justify-end gap-3 shrink-0">
-              <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 bg-white border border-slate-200 rounded-lg transition-colors">
-                Cancel
-              </button>
-              <button type="submit" onClick={handleSubmit} className="px-5 py-2 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-lg transition-colors shadow-sm flex items-center gap-2">
-                <Save className="w-4 h-4" /> {editingInvoice ? "Update Invoice" : "Save Invoice"}
-              </button>
-            </div>
           </div>
         </div>
       )}

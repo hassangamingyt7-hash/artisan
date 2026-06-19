@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Search, DollarSign, Calendar, TrendingUp, TrendingDown, Layers, Printer, BarChart2 } from "lucide-react";
 import { Brand, Supplier, ThreadInventory, Purchase, Expense, Payment, Invoice, Order, Machine, Operator, DailyProduction } from "../types.ts";
 
@@ -22,6 +23,8 @@ interface ReportsViewProps {
 }
 
 export default function ReportsView({ brands, suppliers, inventory, purchases, expenses, payments, invoices, orders, machines = [], operators = [], dailyProduction = [] }: ReportsViewProps) {
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [reportType, setReportType] = useState<"pl" | "inventory" | "receivables" | "machines" | "operators">("pl");
 
   const formatPKR = (amount: number) => {
@@ -225,7 +228,17 @@ export default function ReportsView({ brands, suppliers, inventory, purchases, e
           </div>
 
           <div className="overflow-x-auto text-xs">
-            <table className="w-full text-left" id="report-inventory-table">
+            
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(invoices, "reports")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left" id="report-inventory-table">
               <thead>
                 <tr className="border-b border-slate-150 font-mono text-[10px] text-slate-400 uppercase tracking-widest font-bold">
                   <th className="pb-3 px-2">Shade Code</th>

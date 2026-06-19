@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import TableActionControls, { exportToExcel, filterByDateRange } from "./TableActionControls.tsx";
 import { Users, Plus, Search, Trash2, Edit3, Save, X, Activity } from "lucide-react";
 import { Operator, Machine, DailyProduction } from "../types";
 
@@ -7,6 +8,8 @@ export default function OperatorPerformanceView({
   onAddOperator, onEditOperator, onDeleteOperator
 }: any) {
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const canModify = ["admin", "manager", "production manager", "accountant"].includes(userRole);
 
   const [showModal, setShowModal] = useState(false);
@@ -86,7 +89,8 @@ export default function OperatorPerformanceView({
     link.click();
   };
 
-  const filtered = operators.filter((o: any) => o.name.toLowerCase().includes(search.toLowerCase()));
+  const timeFiltered = filterByDateRange(operators, "created_at", dateFilter, customDate);
+  const filtered = timeFiltered.filter((o: any) => o.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto animate-in fade-in zoom-in-95 duration-200">
@@ -117,7 +121,17 @@ export default function OperatorPerformanceView({
       </div>
 
        <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto shadow-sm">
-         <table className="w-full text-left">
+         
+        <TableActionControls 
+          onPrint={() => window.print()} 
+          onPdf={() => window.print()} 
+          onExcel={() => exportToExcel(filtered, "operatorperformance")}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          customDateRange={customDate}
+          setCustomDateRange={setCustomDate}
+        />
+        <table className="w-full text-left">
            <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
              <tr>
                <th className="py-3 px-4 font-semibold">Name</th>
