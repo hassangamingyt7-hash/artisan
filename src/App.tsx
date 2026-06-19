@@ -159,9 +159,15 @@ export default function App() {
 
       let data;
       try {
-        data = await res.json();
-      } catch (e) {
-        throw new Error("API server is not running or returned HTML instead of JSON. Ensure your Node.js backend is active on Hostinger.");
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error("Raw server response:", text);
+          throw new Error(`Server returned invalid response (starts with: ${text.substring(0, 50)}...). Ensure backend is running.`);
+        }
+      } catch (e: any) {
+        throw new Error(e.message || "API server is not running. Ensure your Node.js backend is active on Hostinger.");
       }
       
       if (res.ok) {
@@ -252,7 +258,7 @@ export default function App() {
             <div className="mx-auto w-10 h-10 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/5">
               <Building2 className="w-5 h-5 stroke-[1.5]" />
             </div>
-            <h2 className="text-base font-bold text-white uppercase tracking-tight">ARTI8SAN ERP</h2>
+            <h2 className="text-base font-bold text-white uppercase tracking-tight">ARTISAN EMB</h2>
             <p className="text-[9px] text-slate-500 uppercase tracking-widest font-mono font-bold">Embroidery & Accounts Ledger Engine</p>
           </div>
 

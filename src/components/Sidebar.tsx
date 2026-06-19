@@ -75,7 +75,7 @@ export default function Sidebar({ currentTab, setTab, userRole, isOpen, onClose 
               A8
             </div>
             <div>
-              <h1 className="font-bold text-sm tracking-tight text-white leading-none">ARTI8SAN</h1>
+              <h1 className="font-bold text-sm tracking-tight text-white leading-none">ARTISAN EMB</h1>
               <span className="text-[9px] text-slate-500 font-mono tracking-wider uppercase font-semibold">ERP System</span>
             </div>
           </div>
