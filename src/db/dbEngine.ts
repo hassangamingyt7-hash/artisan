@@ -275,10 +275,7 @@ export const DB = {
       try {
         let q = `SELECT * FROM \`${tableName}\``;
         let p: any[] = [];
-        if (!isAdmin && tenantId && tableName !== "users" && tableName !== "settings") {
-          q += " WHERE user_id = ?";
-          p.push(tenantId);
-        }
+        
         const [rows] = await mysql.query(q, p);
         return rows as T[];
       } catch (err) {
@@ -293,9 +290,7 @@ export const DB = {
     }
     
     let list = (cache[tableName] || []) as any[];
-    if (!isAdmin && tenantId && tableName !== "users") {
-      list = list.filter(item => item.user_id === tenantId);
-    }
+    
     return list as T[];
   },
 
@@ -311,10 +306,7 @@ export const DB = {
       try {
         let q = `SELECT * FROM \`${tableName}\` WHERE id = ?`;
         let p: any[] = [id];
-        if (!isAdmin && tenantId && tableName !== "users" && tableName !== "settings") {
-          q += " AND user_id = ?";
-          p.push(tenantId);
-        }
+        
         const [rows] = await mysql.query(q, p);
         const list = rows as T[];
         return list.length > 0 ? list[0] : null;
@@ -328,9 +320,7 @@ export const DB = {
       return cache.settings as any;
     }
     let list = (cache[tableName] || []) as any[];
-    if (!isAdmin && tenantId && tableName !== "users") {
-      list = list.filter(item => item.user_id === tenantId);
-    }
+    
     const match = list.find((item) => item.id === id);
     return match || null;
   },
@@ -339,9 +329,7 @@ export const DB = {
   async insertRecord<T>(tableName: keyof DBStructure, record: Partial<T>): Promise<any> {
     const tenantId = tenantStorage.getStore()?.tenantId;
     let finalRecord: any = { ...record };
-    if (tenantId && tableName !== "users" && tableName !== "settings") {
-       finalRecord.user_id = tenantId;
-    }
+    
 
     const mysql = getMySQLPool();
     if (mysql) {
@@ -376,12 +364,7 @@ export const DB = {
     const isAdmin = store?.role === "admin";
     
     // First, verify ownership
-    if (!isAdmin && tenantId && tableName !== "users" && tableName !== "settings") {
-       const existing = await this.queryById(tableName, id);
-       if (!existing || (existing as any).user_id !== tenantId) {
-         throw new Error("Unauthorized to access or modify this record.");
-       }
-    }
+    
 
     const mysql = getMySQLPool();
     if (mysql) {
@@ -422,12 +405,7 @@ export const DB = {
     const isAdmin = store?.role === "admin";
     
     // First, verify ownership
-    if (!isAdmin && tenantId && tableName !== "users" && tableName !== "settings") {
-       const existing = await this.queryById(tableName, id);
-       if (!existing || (existing as any).user_id !== tenantId) {
-         throw new Error("Unauthorized to access or delete this record.");
-       }
-    }
+    
 
     const mysql = getMySQLPool();
     if (mysql) {

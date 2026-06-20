@@ -308,6 +308,56 @@ const handleGetDashboardStats = async (req: Request, res: Response) => {
 app.get("/api/dashboard/stats", authenticateJWT, handleGetDashboardStats);
 app.get("/api/dashboard-stats", authenticateJWT, handleGetDashboardStats);
 
+app.get("/api/bootstrap", authenticateJWT, async (req: Request, res: Response) => {
+  try {
+    const customers = await DB.queryAll<any>("customers");
+    const brands = await DB.queryAll<any>("brands");
+    const suppliers = await DB.queryAll<any>("suppliers");
+    const inventory = await DB.queryAll<any>("thread_inventory");
+    const orders = await DB.queryAll<any>("orders");
+    const purchases = await DB.queryAll<any>("purchases");
+    const expenses = await DB.queryAll<any>("expenses");
+    const payments = await DB.queryAll<any>("payments");
+    const invoices = await DB.queryAll<any>("invoices");
+    const roles_permissions = await DB.queryAll<any>("roles_permissions");
+    const machines = await DB.queryAll<any>("machines");
+    const operators = await DB.queryAll<any>("operators");
+    const daily_production = await DB.queryAll<any>("daily_production");
+
+    // Recalculate ledger balances inside the bootstrap just to be safe
+    const receivables = await DB.queryAll<any>("receivables");
+    const custEnriched = customers.map((cust) => {
+      const outstanding = receivables.filter((r) => r.customer_id === cust.id).reduce((sum, r) => sum + (Number(r.balance_remaining) || 0), 0);
+      return { ...cust, outstanding_balance: outstanding };
+    });
+
+    const payables = await DB.queryAll<any>("payables");
+    const suppEnriched = suppliers.map((supp) => {
+      const outstanding = payables.filter((p) => p.supplier_id === supp.id).reduce((sum, p) => sum + (Number(p.balance) || 0), 0);
+      return { ...supp, total_outstanding_payable: outstanding };
+    });
+
+    // We can also retrieve dashboard stats logic here, but returning the raw lists is fine
+    res.json({
+      customers: custEnriched,
+      brands,
+      suppliers: suppEnriched,
+      inventory,
+      orders,
+      purchases,
+      expenses,
+      payments,
+      invoices,
+      roles_permissions,
+      machines,
+      operators,
+      daily_production
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // =========================================================================
 // CUSTOMER MANAGEMENT
 // =========================================================================

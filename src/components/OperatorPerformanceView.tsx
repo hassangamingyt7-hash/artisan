@@ -8,6 +8,7 @@ export default function OperatorPerformanceView({
   onAddOperator, onEditOperator, onDeleteOperator
 }: any) {
   const [search, setSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const canModify = ["admin", "manager", "production manager", "accountant"].includes(userRole);
@@ -35,6 +36,7 @@ export default function OperatorPerformanceView({
 
   const saveOp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     const payload = { 
       name: oName, 
       assigned_machine_id: parseInt(oMachineId, 10), 
@@ -44,9 +46,10 @@ export default function OperatorPerformanceView({
     try {
       if (editingOp) await onEditOperator(editingOp.id, payload);
       else await onAddOperator(payload);
+      await onRefresh();
       setShowModal(false);
-      onRefresh();
-    } catch (e) { alert("Error saving operator"); }
+      setIsSaving(false);
+    } catch (e: any) { alert("Error: " + e.message); setIsSaving(false); }
   };
 
   const formatPKR = (amount: number) => {
@@ -157,7 +160,8 @@ export default function OperatorPerformanceView({
                  <td className="py-3 px-4 text-right font-mono font-black text-slate-900 bg-fuchsia-50/50">{formatPKR(stats.totalPayable)}</td>
                  <td className="py-3 px-4 text-right space-x-2">
                    <button onClick={() => handleOpenOp(o)} className="text-slate-400 hover:text-fuchsia-600 transition-colors"><Edit3 className="w-4 h-4 inline"/></button>
-                   {userRole === "admin" && <button onClick={() => {if(window.confirm("Delete?")) { onDeleteOperator(o.id); onRefresh(); }}} className="text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4 inline"/></button>}
+                   {userRole === "admin" && <button onClick={() => {if(window.confirm("Delete?")) { onDeleteOperator(o.id); onRefresh();
+      setIsSaving(false); }}} className="text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4 inline"/></button>}
                  </td>
                </tr>
              )})}
@@ -176,7 +180,9 @@ export default function OperatorPerformanceView({
               <div><label className="block text-xs font-bold text-slate-500 mb-1">Bonus Rate (Per Unit Produced) *</label><input required type="number" step="0.01" value={oBonusRate} onChange={e => setOBonusRate(e.target.value)} className="w-full border rounded p-2 text-sm font-mono" /></div>
               <div className="flex justify-end gap-2 pt-4">
                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 border rounded text-sm font-medium hover:bg-slate-50">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-fuchsia-600 text-white rounded text-sm font-medium hover:bg-fuchsia-700">Save</button>
+                <button type="submit" className="px-4 py-2 bg-fuchsia-600 text-white rounded text-sm font-medium hover:bg-fuchsia-700 disabled:opacity-50 flex justify-center items-center gap-2">
+                  {isSaving ? "Saving..." : "Save"}
+                </button>
               </div>
             </form>
           </div>

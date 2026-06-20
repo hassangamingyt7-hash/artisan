@@ -3,6 +3,7 @@ import { Users, Plus, Edit, Trash2, KeyRound } from "lucide-react";
 
 // We will fetch users from /api/users
 export default function UserManagementView({ userRole }: { userRole: string }) {
+  const [isSaving, setIsSaving] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", username: "", password: "", role: "manager" });
@@ -106,9 +107,9 @@ export default function UserManagementView({ userRole }: { userRole: string }) {
                 <option value="admin">System Administrator</option>
               </select>
             </div>
-            <button type="submit" className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-sm flex justify-center items-center gap-2">
-               <Plus className="w-4 h-4" /> Issue Access
-            </button>
+            <button type="submit" className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-sm flex justify-center items-center gap-2 disabled:opacity-50 flex justify-center items-center gap-2">
+                  {isSaving ? "Saving..." : (<><Plus className="w-4 h-4" /> Issue Access</>)}
+                </button>
           </form>
         </div>
       </div>

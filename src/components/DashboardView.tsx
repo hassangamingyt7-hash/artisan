@@ -413,7 +413,7 @@ export default function DashboardView({
             </button>
           </div>
           
-          {inventory.lowStockList.length === 0 ? (
+          {(!inventory?.lowStockList || inventory.lowStockList.length === 0) ? (
             <div className="py-10 text-center text-slate-400 text-[11px] flex flex-col items-center justify-center gap-1.5 border border-dashed border-slate-200 rounded-lg">
               <ShieldCheck className="w-8 h-8 text-blue-500" />
               <span>Perfect! All thread shades are fully stocked above safety limits.</span>
@@ -461,15 +461,15 @@ export default function DashboardView({
           <div className="grid grid-cols-3 gap-3 mb-4">
              <div className="p-3 bg-slate-50 border border-slate-100 rounded text-center">
                 <span className="block text-[10px] uppercase font-bold text-slate-400">Total Machines</span>
-                <span className="text-xl font-black text-slate-800">{machines.length}</span>
+                <span className="text-xl font-black text-slate-800">{(machines || []).length}</span>
              </div>
              <div className="p-3 bg-emerald-50 border border-emerald-100 rounded text-center">
                 <span className="block text-[10px] uppercase font-bold text-emerald-600">Running</span>
-                <span className="text-xl font-black text-emerald-700">{machines.filter((m: any) => m.status === 'Running').length}</span>
+                <span className="text-xl font-black text-emerald-700">{(machines || []).filter((m: any) => m.status === 'Running').length}</span>
              </div>
              <div className="p-3 bg-amber-50 border border-amber-100 rounded text-center">
                 <span className="block text-[10px] uppercase font-bold text-amber-600">Idle / Maint</span>
-                <span className="text-xl font-black text-amber-700">{machines.filter((m: any) => m.status !== 'Running').length}</span>
+                <span className="text-xl font-black text-amber-700">{(machines || []).filter((m: any) => m.status !== 'Running').length}</span>
              </div>
           </div>
           <div>
@@ -498,7 +498,7 @@ export default function DashboardView({
           <div className="grid grid-cols-2 gap-3 mb-4">
              <div className="p-3 bg-slate-50 border border-slate-100 rounded text-center">
                 <span className="block text-[10px] uppercase font-bold text-slate-400">Total Operators</span>
-                <span className="text-xl font-black text-slate-800">{operators.length}</span>
+                <span className="text-xl font-black text-slate-800">{(operators || []).length}</span>
              </div>
              <div className="p-3 bg-fuchsia-50 border border-fuchsia-100 rounded text-center">
                 <span className="block text-[10px] uppercase font-bold text-fuchsia-600">Payroll Payable Estimates</span>
@@ -516,7 +516,7 @@ export default function DashboardView({
             <h4 className="text-[10px] uppercase font-bold text-slate-400 mb-2">Top Performer (By Volume)</h4>
             <div className="bg-slate-50 p-3 rounded border border-slate-100">
                {(() => {
-                 if (operators.length === 0 || dailyProduction.length === 0) return <span className="text-xs text-slate-500">Not enough data to calculate top performer.</span>;
+                 if (!operators || operators.length === 0 || !dailyProduction || dailyProduction.length === 0) return <span className="text-xs text-slate-500">Not enough data to calculate top performer.</span>;
                  let topOp = null;
                  let maxVol = 0;
                  operators.forEach((op: any) => {

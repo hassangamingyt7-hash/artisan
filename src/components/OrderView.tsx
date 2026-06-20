@@ -20,6 +20,7 @@ interface OrderViewProps {
 
 export default function OrderView({ orders, brands, userRole, onRefresh, onAdd, onEdit, onDelete }: OrderViewProps) {
   const [search, setSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [statusFilter, setStatusFilter] = useState("");
@@ -94,14 +95,18 @@ export default function OrderView({ orders, brands, userRole, onRefresh, onAdd, 
       try {
         await onEdit(order.id, { status: nextStatus });
         onRefresh();
+      setIsSaving(false);
       } catch (err: any) {
         alert("Error transitioning status: " + err.message);
-      }
+      
+      setIsSaving(false);
+    }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingId) {
         await onEdit(editingId, formData);
@@ -121,8 +126,11 @@ export default function OrderView({ orders, brands, userRole, onRefresh, onAdd, 
       }
       setShowModal(false);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error saving order: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -130,8 +138,11 @@ export default function OrderView({ orders, brands, userRole, onRefresh, onAdd, 
     try {
       await onDelete(id);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error deleting order: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -473,9 +484,9 @@ export default function OrderView({ orders, brands, userRole, onRefresh, onAdd, 
                 <button
                   id="submit-order-form-btn"
                   type="submit"
-                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer"
+                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer disabled:opacity-50 flex justify-center items-center gap-2"
                 >
-                  {editingId ? "Update Job" : "Book Production Job"}
+                  {isSaving ? "Saving..." : (editingId ? "Update Job" : "Book Production Job")}
                 </button>
               </div>
             </form>

@@ -19,6 +19,7 @@ interface SupplierViewProps {
 
 export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, onEdit, onDelete }: SupplierViewProps) {
   const [search, setSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [showModal, setShowModal] = useState(false);
@@ -107,6 +108,8 @@ export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, on
       }
     } catch (err: any) {
       alert("Error: " + err.message);
+    
+      setIsSaving(false);
     } finally {
       setLedgerLoading(false);
     }
@@ -114,6 +117,7 @@ export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, on
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingId) {
         await onEdit(editingId, formData);
@@ -122,8 +126,11 @@ export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, on
       }
       setShowModal(false);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error processing supplier: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -131,8 +138,11 @@ export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, on
     try {
       await onDelete(id);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error deleting: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -423,9 +433,9 @@ export default function SupplierView({ suppliers, userRole, onRefresh, onAdd, on
                 <button
                   id="submit-supplier-form-btn"
                   type="submit"
-                  className="px-5 py-2 bg-slate-900 border border-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all cursor-pointer"
+                  className="px-5 py-2 bg-slate-900 border border-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all cursor-pointer disabled:opacity-50 flex justify-center items-center gap-2"
                 >
-                  {editingId ? "Update Supplier" : "Register Vendor"}
+                  {isSaving ? "Saving..." : (editingId ? "Update Supplier" : "Register Vendor")}
                 </button>
               </div>
             </form>

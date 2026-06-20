@@ -19,6 +19,7 @@ interface ExpenseViewProps {
 
 export default function ExpenseView({ expenses, userRole, onRefresh, onAdd, onEdit, onDelete }: ExpenseViewProps) {
   const [search, setSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -87,6 +88,7 @@ export default function ExpenseView({ expenses, userRole, onRefresh, onAdd, onEd
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingId) {
         await onEdit(editingId, formData);
@@ -95,8 +97,11 @@ export default function ExpenseView({ expenses, userRole, onRefresh, onAdd, onEd
       }
       setShowModal(false);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -104,8 +109,11 @@ export default function ExpenseView({ expenses, userRole, onRefresh, onAdd, onEd
     try {
       await onDelete(id);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -380,9 +388,9 @@ export default function ExpenseView({ expenses, userRole, onRefresh, onAdd, onEd
                 <button
                   id="submit-expense-form-btn"
                   type="submit"
-                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer"
+                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer disabled:opacity-50 flex justify-center items-center gap-2"
                 >
-                  {editingId ? "Save Changes" : "Log Expense Outflow"}
+                  {isSaving ? "Saving..." : (editingId ? "Update Expense" : "Log Expense")}
                 </button>
               </div>
             </form>

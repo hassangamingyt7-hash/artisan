@@ -113,51 +113,27 @@ export default function App() {
       };
 
       const [
-        dataCust,
-        dataBrand,
-        dataSupp,
-        dataInv,
-        dataOrd,
-        dataPurch,
-        dataExp,
-        dataPay,
-        dataInvoices,
-        dataStats,
-        dataRolesPerms,
-        dataMachines,
-        dataOperators,
-        dataDailyProd
+        bootstrapData,
+        dataStats
       ] = await Promise.all([
-        safeFetchJson("/api/customers", []),
-        safeFetchJson("/api/brands", []),
-        safeFetchJson("/api/suppliers", []),
-        safeFetchJson("/api/inventory", []),
-        safeFetchJson("/api/orders", []),
-        safeFetchJson("/api/purchases", []),
-        safeFetchJson("/api/expenses", []),
-        safeFetchJson("/api/payments", []),
-        safeFetchJson("/api/invoices", []),
+        safeFetchJson("/api/bootstrap", {}),
         safeFetchJson("/api/dashboard-stats", { financials: {}, inventory: {}, production: {} }),
-        safeFetchJson("/api/roles_permissions", []),
-        safeFetchJson("/api/machines", []),
-        safeFetchJson("/api/operators", []),
-        safeFetchJson("/api/daily_production", []),
       ]);
 
-      setCustomers(dataCust);
-      setBrands(dataBrand);
-      setSuppliers(dataSupp);
-      setInventory(dataInv);
-      setOrders(dataOrd);
-      setPurchases(dataPurch);
-      setExpenses(dataExp);
-      setPayments(dataPay);
-      setInvoices(dataInvoices);
-      setDashboardStats(dataStats);
-      setRolesPermissions(dataRolesPerms);
-      setMachines(dataMachines);
-      setOperators(dataOperators);
-      setDailyProduction(dataDailyProd);
+      setCustomers(bootstrapData.customers || []);
+      setBrands(bootstrapData.brands || []);
+      setSuppliers(bootstrapData.suppliers || []);
+      setInventory(bootstrapData.inventory || []);
+      setOrders(bootstrapData.orders || []);
+      setPurchases(bootstrapData.purchases || []);
+      setExpenses(bootstrapData.expenses || []);
+      setPayments(bootstrapData.payments || []);
+      setInvoices(bootstrapData.invoices || []);
+      setDashboardStats(dataStats || { financials: {}, inventory: {}, production: {} });
+      setRolesPermissions(bootstrapData.roles_permissions || []);
+      setMachines(bootstrapData.machines || []);
+      setOperators(bootstrapData.operators || []);
+      setDailyProduction(bootstrapData.daily_production || []);
     } catch (err) {
       console.error("Critical API Synchronization Fail:", err);
     } finally {

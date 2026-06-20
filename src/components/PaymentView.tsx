@@ -19,6 +19,7 @@ interface PaymentViewProps {
 
 export default function PaymentView({ payments, customers, suppliers, userRole, onRefresh, onAddPayment }: PaymentViewProps) {
   const [search, setSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [typeFilter, setTypeFilter] = useState("");
@@ -70,12 +71,16 @@ export default function PaymentView({ payments, customers, suppliers, userRole, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       await onAddPayment(formData);
       setShowModal(false);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error logging payment: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -393,9 +398,9 @@ export default function PaymentView({ payments, customers, suppliers, userRole, 
                 <button
                   id="submit-payment-form-btn"
                   type="submit"
-                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer"
+                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer disabled:opacity-50 flex justify-center items-center gap-2"
                 >
-                  {formData.type === "receipt" ? "Record Cash Receipt" : "Record Vendor Payment"}
+                  {isSaving ? "Saving..." : (formData.type === "receipt" ? "Record Cash Receipt" : "Record Vendor Payment")}
                 </button>
               </div>
             </form>

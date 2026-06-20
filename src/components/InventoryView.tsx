@@ -20,6 +20,7 @@ interface InventoryViewProps {
 
 export default function InventoryView({ inventory, suppliers, userRole, onRefresh, onAdd, onEdit, onDelete }: InventoryViewProps) {
   const [search, setSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [selectedSupplier, setSelectedSupplier] = useState("");
@@ -96,6 +97,7 @@ export default function InventoryView({ inventory, suppliers, userRole, onRefres
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingId) {
         await onEdit(editingId, formData);
@@ -104,8 +106,11 @@ export default function InventoryView({ inventory, suppliers, userRole, onRefres
       }
       setShowModal(false);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -113,8 +118,11 @@ export default function InventoryView({ inventory, suppliers, userRole, onRefres
     try {
       await onDelete(id);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error deleting record: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -448,9 +456,9 @@ export default function InventoryView({ inventory, suppliers, userRole, onRefres
                 <button
                   id="submit-shade-form-btn"
                   type="submit"
-                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer"
+                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer disabled:opacity-50 flex justify-center items-center gap-2"
                 >
-                  {editingId ? "Update Batch" : "Log Shade Stock"}
+                  {isSaving ? "Saving..." : (editingId ? "Update Registration" : "Register Thread Shade")}
                 </button>
               </div>
             </form>

@@ -22,6 +22,7 @@ interface PurchaseViewProps {
 
 export default function PurchaseView({ purchases, suppliers, userRole, onRefresh, onAdd, onEdit, onDelete }: PurchaseViewProps) {
   const [search, setSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [showModal, setShowModal] = useState(false);
@@ -120,6 +121,7 @@ export default function PurchaseView({ purchases, suppliers, userRole, onRefresh
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       // Basic validations
       const invalid = items.some(it => !it.shade_code.trim() || !it.shade_name.trim() || Number(it.cones) <= 0 || Number(it.rate) <= 0);
@@ -168,8 +170,11 @@ export default function PurchaseView({ purchases, suppliers, userRole, onRefresh
       }
       setShowModal(false);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error saving: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -177,8 +182,11 @@ export default function PurchaseView({ purchases, suppliers, userRole, onRefresh
     try {
       await onDelete(id);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error deleting: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -544,9 +552,9 @@ export default function PurchaseView({ purchases, suppliers, userRole, onRefresh
                 <button
                   id="submit-purchase-form-btn"
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 border border-blue-600 text-white rounded text-xs font-bold hover:bg-blue-500 transition-all cursor-pointer uppercase tracking-wider"
+                  className="px-5 py-2 bg-blue-600 border border-blue-600 text-white rounded text-xs font-bold hover:bg-blue-500 transition-all cursor-pointer uppercase tracking-wider disabled:opacity-50 flex justify-center items-center gap-2"
                 >
-                  {editingId ? "Update Bill Information" : "Save Invoice Bill"}
+                  {isSaving ? "Saving..." : (editingId ? "Update Bill Information" : "Save Invoice Bill")}
                 </button>
               </div>
             </form>

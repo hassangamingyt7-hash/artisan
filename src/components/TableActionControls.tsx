@@ -76,12 +76,12 @@ export function exportToExcel(data: any[], filename: string) {
 }
 
 export function filterByDateRange(items: any[], dateField: string, dateFilter: string, customRange?: { start: string, end: string }) {
-  if (dateFilter === "all" || !dateFilter) return items;
+  if (dateFilter === "all" || !dateFilter) return items || [];
   
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
-  return items.filter(item => {
+  return (items || []).filter(item => {
     const itemDate = new Date(item[dateField]);
     if (isNaN(itemDate.getTime())) return true; // If no valid date, keep it (e.g. legacy data)
 

@@ -19,11 +19,13 @@ interface BrandViewProps {
 
 export default function BrandView({ brands, userRole, onRefresh, onAdd, onEdit, onDelete }: BrandViewProps) {
   const [search, setSearch] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState({ start: "", end: "" });
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [viewingBrand, setViewingBrand] = useState<any>(null);
 
   const [formData, setFormData] = useState<Partial<Brand>>({
     name: "",
@@ -72,6 +74,7 @@ export default function BrandView({ brands, userRole, onRefresh, onAdd, onEdit, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       if (editingId) {
         await onEdit(editingId, formData);
@@ -80,8 +83,11 @@ export default function BrandView({ brands, userRole, onRefresh, onAdd, onEdit, 
       }
       setShowModal(false);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -89,8 +95,11 @@ export default function BrandView({ brands, userRole, onRefresh, onAdd, onEdit, 
     try {
       await onDelete(id);
       onRefresh();
+      setIsSaving(false);
     } catch (err: any) {
       alert("Error deleting brand: " + err.message);
+    
+      setIsSaving(false);
     }
   };
 
@@ -357,9 +366,9 @@ export default function BrandView({ brands, userRole, onRefresh, onAdd, onEdit, 
                 <button
                   id="submit-brand-form-btn"
                   type="submit"
-                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer"
+                  className="px-4 py-1.5 bg-blue-600 border border-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-500 transition-all cursor-pointer disabled:opacity-50 flex justify-center items-center gap-2"
                 >
-                  {editingId ? "Update Brand" : "Add Brand"}
+                  {isSaving ? "Saving..." : (editingId ? "Update Brand" : "Register Brand")}
                 </button>
               </div>
             </form>

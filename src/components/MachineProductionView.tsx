@@ -9,6 +9,7 @@ export default function MachineProductionView({
   onAddProduction, onEditProduction, onDeleteProduction
 }: any) {
   const [activeSubTab, setActiveSubTab] = useState<"machines" | "production">("production");
+  const [isSaving, setIsSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("all");
   const [customDate, setCustomDate] = useState({ start: "", end: "" });
@@ -52,13 +53,15 @@ export default function MachineProductionView({
 
   const saveMachine = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     const payload = { name: mName, machine_number: mNum, machine_type: mType, status: mStatus, installation_date: mDate };
     try {
       if (editingMachine) await onEditMachine(editingMachine.id, payload);
       else await onAddMachine(payload);
+      await onRefresh();
       setShowMachineModal(false);
-      onRefresh();
-    } catch (e) { alert("Error saving machine"); }
+      setIsSaving(false);
+    } catch (e: any) { alert("Error: " + e.message); setIsSaving(false); }
   };
 
   const handleOpenProd = (p?: DailyProduction) => {
@@ -77,6 +80,7 @@ export default function MachineProductionView({
 
   const saveProd = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     const payload = { 
       date: pDate, machine_id: parseInt(pMachineId, 10), operator_id: parseInt(pOpId, 10),
       brand_name: pBrand, design_name: pDesign, quantity_produced: parseInt(pQty, 10),
@@ -85,9 +89,10 @@ export default function MachineProductionView({
     try {
       if (editingProd) await onEditProduction(editingProd.id, payload);
       else await onAddProduction(payload);
+      await onRefresh();
       setShowProdModal(false);
-      onRefresh();
-    } catch (e) { alert("Error saving production log"); }
+      setIsSaving(false);
+    } catch (e: any) { alert("Error: " + e.message); setIsSaving(false); }
   };
 
   const exportExcel = (data: any[], filename: string) => {
@@ -184,7 +189,8 @@ export default function MachineProductionView({
                    <td className="py-3 px-4 text-slate-500">{m.installation_date}</td>
                    <td className="py-3 px-4 text-right space-x-2">
                      <button onClick={() => handleOpenMachine(m)} className="text-slate-400 hover:text-indigo-600 transition-colors"><Edit3 className="w-4 h-4 inline"/></button>
-                     {userRole === "admin" && <button onClick={() => {if(window.confirm("Delete?")) { onDeleteMachine(m.id); onRefresh(); }}} className="text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4 inline"/></button>}
+                     {userRole === "admin" && <button onClick={() => {if(window.confirm("Delete?")) { onDeleteMachine(m.id); onRefresh();
+      setIsSaving(false); }}} className="text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4 inline"/></button>}
                    </td>
                  </tr>
                ))}
@@ -219,7 +225,8 @@ export default function MachineProductionView({
                    <td className="py-3 px-4 text-right font-mono text-slate-500">{p.working_hours} h</td>
                    <td className="py-3 px-4 text-right space-x-2">
                      <button onClick={() => handleOpenProd(p)} className="text-slate-400 hover:text-indigo-600 transition-colors"><Edit3 className="w-4 h-4 inline"/></button>
-                     {userRole === "admin" && <button onClick={() => {if(window.confirm("Delete?")) { onDeleteProduction(p.id); onRefresh(); }}} className="text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4 inline"/></button>}
+                     {userRole === "admin" && <button onClick={() => {if(window.confirm("Delete?")) { onDeleteProduction(p.id); onRefresh();
+      setIsSaving(false); }}} className="text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4 inline"/></button>}
                    </td>
                  </tr>
                )})}
@@ -241,7 +248,9 @@ export default function MachineProductionView({
               <div><label className="block text-xs font-bold text-slate-500 mb-1">Install Date</label><input type="date" value={mDate} onChange={e => setMDate(e.target.value)} className="w-full border rounded p-2 text-sm" /></div>
               <div className="flex justify-end gap-2 pt-4">
                 <button type="button" onClick={() => setShowMachineModal(false)} className="px-4 py-2 border rounded text-sm font-medium hover:bg-slate-50">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700">Save</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex justify-center items-center gap-2">
+                  {isSaving ? "Saving..." : "Save"}
+                </button>
               </div>
             </form>
           </div>
@@ -265,7 +274,9 @@ export default function MachineProductionView({
               </div>
               <div className="flex justify-end gap-2 pt-4">
                 <button type="button" onClick={() => setShowProdModal(false)} className="px-4 py-2 border rounded text-sm font-medium hover:bg-slate-50">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700">Save Log</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex justify-center items-center gap-2">
+                  {isSaving ? "Saving..." : "Save Log"}
+                </button>
               </div>
             </form>
           </div>
